@@ -10,7 +10,7 @@ import { UrgentTasks } from '@/components/dashboard/UrgentTasks';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { stats, loading, fetchStats } = useDashboardStore();
+  const { stats, fetchStats } = useDashboardStore();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 

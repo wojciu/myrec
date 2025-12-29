@@ -32,6 +32,7 @@ export async function GET(
             title: true,
             body: true,
             category: true,
+            authorId: true,
           },
         },
         attachments: true,
