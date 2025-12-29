@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "node --import prisma/seed.ts"
+    "db:seed": "node prisma/seed.js",
+    "cron": "tsx scripts/cron.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
