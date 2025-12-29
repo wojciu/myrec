@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id             String      @id @default(uuid())
+  email          String      @unique
+  passwordHash   String
+  displayName    String
+  role           String      @default("receptionist")
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id])
+  createdEntries Entry[]     @relation("AuthorEntries")
+  assignedTasks  Task[]      @relation("AssigneeTasks")
+  createdAt      DateTime    @default(now())
+}
+
+model Department {
+  id              String   @id @default(uuid())
+  name            String
+  users           User[]
+  visibleEntries  Entry[]  @relation("VisibleToEntries")
+  assignedTasks   Task[]   @relation("DepartmentTasks")
+  createdAt       DateTime @default(now())
+}
+
+model Entry {
+  id                   String       @id @default(uuid())
+  authorId             String
+  author               User         @relation("AuthorEntries", fields: [authorId], references: [id])
+  title                String?
+  body                 String
+  category             String
+  visibleToDepartments Department[] @relation("VisibleToEntries")
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  tasks                Task[]
+  attachments          Attachment[]
+}
+
+model Task {
+  id                   String      @id @default(uuid())
+  title                String
+  description          String?
+  status               String      @default("open")
+  priority             Int         @default(2)
+  assigneeId           String?
+  assignee             User?       @relation("AssigneeTasks", fields: [assigneeId], references: [id])
+  assigneeDepartmentId String?
+  assigneeDepartment   Department? @relation("DepartmentTasks", fields: [assigneeDepartmentId], references: [id])
+  entryId              String?
+  entry                Entry?      @relation(fields: [entryId], references: [id])
+  dueAt                DateTime?
+  reminderAt           DateTime?
+  reminderSentAt       DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  attachments          Attachment[]
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  entryId   String?
+  entry     Entry?   @relation(fields: [entryId], references: [id])
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id])
+  filePath  String
+  fileName  String
+  contentType String
+  createdAt DateTime @default(now())
+}
