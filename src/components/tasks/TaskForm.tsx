@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTasksStore } from '@/store/tasks';
+import { useUsersStore } from '@/store/users';
 import { useAuthStore } from '@/store/auth';
 
 interface TaskFormProps {
@@ -15,11 +16,14 @@ const PRIORITIES = [1, 2, 3];
 
 export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
   const { createTask, updateTask } = useTasksStore();
-  const { user } = useAuthStore();
+  const { users, departments, fetchUsers, fetchDepartments } = useUsersStore();
+  const { hasHydrated } = useAuthStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<string>('open');
   const [priority, setPriority] = useState<number>(2);
+  const [assigneeId, setAssigneeId] = useState<string>('');
+  const [assigneeDepartmentId, setAssigneeDepartmentId] = useState<string>('');
   const [dueAt, setDueAt] = useState('');
   const [reminderAt, setReminderAt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,11 +32,20 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
   const isEditing = !!task;
 
   useEffect(() => {
+    if (hasHydrated) {
+      fetchUsers();
+      fetchDepartments();
+    }
+  }, [hasHydrated, fetchUsers, fetchDepartments]);
+
+  useEffect(() => {
     if (task) {
       setTitle(task.title || '');
       setDescription(task.description || '');
       setStatus(task.status || 'open');
       setPriority(task.priority || 2);
+      setAssigneeId(task.assigneeId || '');
+      setAssigneeDepartmentId(task.assigneeDepartmentId || '');
       setDueAt(task.dueAt ? task.dueAt.slice(0, 16) : '');
       setReminderAt(task.reminderAt ? task.reminderAt.slice(0, 16) : '');
     }
@@ -60,6 +73,14 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
 
       if (status) {
         data.status = status;
+      }
+
+      if (assigneeId) {
+        data.assigneeId = assigneeId;
+      }
+
+      if (assigneeDepartmentId) {
+        data.assigneeDepartmentId = assigneeDepartmentId;
       }
 
       if (dueAt) {
@@ -90,6 +111,8 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
     setDescription('');
     setStatus('open');
     setPriority(2);
+    setAssigneeId('');
+    setAssigneeDepartmentId('');
     setDueAt('');
     setReminderAt('');
     setError('');
@@ -180,6 +203,46 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                       {p === 1 && 'Wysoki'}
                       {p === 2 && 'Średni'}
                       {p === 3 && 'Niski'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="assigneeId" className="block text-sm font-medium text-gray-700 mb-1">
+                  Przypisz do użytkownika
+                </label>
+                <select
+                  id="assigneeId"
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                >
+                  <option value="">Bez przypisania</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.displayName} ({u.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="assigneeDepartmentId" className="block text-sm font-medium text-gray-700 mb-1">
+                  Przypisz do działu
+                </label>
+                <select
+                  id="assigneeDepartmentId"
+                  value={assigneeDepartmentId}
+                  onChange={(e) => setAssigneeDepartmentId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                >
+                  <option value="">Bez przypisania</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
                     </option>
                   ))}
                 </select>
