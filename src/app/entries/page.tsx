@@ -7,17 +7,19 @@ import { EntryList } from '@/components/entries/EntryList';
 import { EntryForm } from '@/components/entries/EntryForm';
 
 export default function EntriesPage() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<any>(null);
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (!isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, hasHydrated, router]);
 
   const handleLogout = () => {
     logout();
@@ -40,6 +42,10 @@ export default function EntriesPage() {
     setShowForm(false);
     setEditingEntry(null);
   };
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return null;

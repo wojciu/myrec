@@ -9,22 +9,24 @@ import { RecentEntries } from '@/components/dashboard/RecentEntries';
 import { UrgentTasks } from '@/components/dashboard/UrgentTasks';
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const { stats, fetchStats } = useDashboardStore();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (!isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, hasHydrated, router]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (hasHydrated && isAuthenticated) {
       fetchStats();
     }
-  }, [isAuthenticated, fetchStats]);
+  }, [isAuthenticated, hasHydrated, fetchStats]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -40,6 +42,10 @@ export default function DashboardPage() {
     const handleAdmin = () => {
     router.push('/admin');
   };
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return null;

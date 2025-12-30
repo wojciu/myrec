@@ -5,14 +5,20 @@ import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, hasHydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (isAuthenticated) {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, hasHydrated, router]);
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">

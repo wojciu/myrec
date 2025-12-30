@@ -10,7 +10,7 @@ import { DepartmentsList } from '@/components/admin/DepartmentsList';
 import { DepartmentForm } from '@/components/admin/DepartmentForm';
 
 export default function AdminPage() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const { departments, fetchDepartments } = useAdminStore();
   const router = useRouter();
   const [tab, setTab] = useState<'users' | 'departments'>('users');
@@ -21,6 +21,8 @@ export default function AdminPage() {
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
@@ -33,7 +35,7 @@ export default function AdminPage() {
     }
 
     fetchDepartments();
-  }, [isAuthenticated, user, router, fetchDepartments]);
+  }, [isAuthenticated, hasHydrated, user, router, fetchDepartments]);
 
   const handleLogout = () => {
     logout();
@@ -73,6 +75,10 @@ export default function AdminPage() {
     setShowDeptForm(false);
     setEditingDept(null);
   };
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return null;

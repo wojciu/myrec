@@ -7,17 +7,19 @@ import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
 
 export default function TasksPage() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     if (!isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, hasHydrated, router]);
 
   const handleLogout = () => {
     logout();
@@ -40,6 +42,10 @@ export default function TasksPage() {
     setShowForm(false);
     setEditingTask(null);
   };
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return null;
