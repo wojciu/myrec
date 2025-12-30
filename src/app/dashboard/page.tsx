@@ -37,6 +37,10 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
+    const handleAdmin = () => {
+    router.push('/admin');
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -53,6 +57,12 @@ export default function DashboardPage() {
             <span className="text-gray-600">
               {user?.displayName} ({user?.role})
             </span>
+             <button
+              onClick={handleAdmin}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Admin
+            </button>
             <button
               onClick={handleLogout}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -65,7 +75,8 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Przegląd</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Przegląd</h2>
+          
           <button
             onClick={handleRefresh}
             disabled={refreshing}

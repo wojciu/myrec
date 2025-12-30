@@ -101,7 +101,7 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-gray-900">
               {isEditing ? 'Edytuj zadanie' : 'Nowe zadanie'}
             </h2>
             <button
@@ -124,7 +124,7 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                 placeholder="Np. Naprawa kranu w pokoju 205"
               />
             </div>
@@ -138,7 +138,7 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                 placeholder="Szczegóły zadania..."
               />
             </div>
@@ -152,7 +152,7 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                   id="status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -173,7 +173,7 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                   id="priority"
                   value={priority}
                   onChange={(e) => setPriority(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
                   {PRIORITIES.map((p) => (
                     <option key={p} value={p}>
@@ -196,7 +196,7 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                   type="datetime-local"
                   value={dueAt}
                   onChange={(e) => setDueAt(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
               </div>
 
@@ -209,7 +209,7 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                   type="datetime-local"
                   value={reminderAt}
                   onChange={(e) => setReminderAt(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
               </div>
             </div>

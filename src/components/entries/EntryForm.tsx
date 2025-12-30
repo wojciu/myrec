@@ -78,7 +78,7 @@ export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-gray-900">
               {isEditing ? 'Edytuj wpis' : 'Nowy wpis'}
             </h2>
             <button
@@ -100,7 +100,7 @@ export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                 placeholder="Np. Gość zgłosił usterkę..."
               />
             </div>
@@ -113,7 +113,7 @@ export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
                 id="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -133,7 +133,7 @@ export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
                 onChange={(e) => setBody(e.target.value)}
                 required
                 rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                 placeholder="Opis zdarzenia, informacja..."
               />
             </div>

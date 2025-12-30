@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="max-w-md w-full bg-white shadow-md rounded-lg p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">Hotel Shift Journal</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-gray-900">Hotel Shift Journal</h1>
         <p className="text-gray-600 text-center mb-6">
           Dziennik zmian dla recepcji hotelowej
         </p>

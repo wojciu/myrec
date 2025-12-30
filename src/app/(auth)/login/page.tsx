@@ -43,7 +43,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full">
         <div className="bg-white shadow-md rounded-lg p-8">
-          <h1 className="text-2xl font-bold text-center mb-6">Hotel Shift Journal</h1>
+          <h1 className="text-2xl font-bold text-center mb-6 text-gray-900">Hotel Shift Journal</h1>
           <h2 className="text-lg text-gray-600 text-center mb-6">Logowanie</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -57,7 +57,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 text-gray-900"
                 autoFocus
               />
             </div>
@@ -72,7 +72,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 text-gray-900"
               />
             </div>
 

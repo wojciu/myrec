@@ -46,7 +46,7 @@ export function UrgentTasks() {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Priorytetowe zadania</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Priorytetowe zadania</h2>
         <button
           onClick={() => router.push('/tasks')}
           className="text-sm text-blue-600 hover:text-blue-700"

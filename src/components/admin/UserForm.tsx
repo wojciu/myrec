@@ -117,7 +117,7 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
               />
             </div>
 
@@ -131,7 +131,7 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
               />
             </div>
 
@@ -143,7 +143,7 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 {ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -161,7 +161,7 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
                 id="department"
                 value={departmentId}
                 onChange={(e) => setDepartmentId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="">Brak działu</option>
                 {departments.map((d) => (
@@ -182,7 +182,7 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
                 placeholder={isEditing ? 'Zostaw puste, aby nie zmieniać' : 'Wpisz hasło'}
               />
             </div>
