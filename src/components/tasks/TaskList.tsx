@@ -105,13 +105,13 @@ export function TaskList({ onEdit }: TaskListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Zadania</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Zadania</h2>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Filtry:</label>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
           >
             <option value="all">Wszystkie</option>
             {STATUSES.map((s) => (
@@ -187,7 +187,7 @@ export function TaskList({ onEdit }: TaskListProps) {
                     <select
                       value={task.status}
                       onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                      className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-400"
                       title="Zmień status"
                     >
                       {STATUSES.map((s) => (
