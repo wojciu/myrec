@@ -64,29 +64,37 @@ export function UrgentTasks() {
             return (
               <div
                 key={task.id}
-                className={`p-4 hover:bg-gray-50 ${overdue ? 'bg-red-50' : ''}`}
+                onClick={() => router.push(`/tasks?id=${task.id}`)}
+                className={`p-4 hover:bg-gray-50 cursor-pointer group ${overdue ? 'bg-red-50' : ''}`}
               >
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${PRIORITY_COLORS[task.priority]}`}>
-                    {task.priority === 1 ? 'Wysoki' : task.priority === 2 ? 'Średni' : 'Niski'}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${PRIORITY_COLORS[task.priority]}`}>
+                        {task.priority === 1 ? 'Wysoki' : task.priority === 2 ? 'Średni' : 'Niski'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[task.status]}`}>
+                        {STATUS_LABELS[task.status]}
+                      </span>
+                      <h3 className="font-medium text-gray-900">{task.title}</h3>
+                    </div>
+                    {task.description && (
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">{task.description}</p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      {task.dueAt && (
+                        <span className={overdue ? 'text-red-600 font-medium' : ''}>
+                          Termin: {new Date(task.dueAt).toLocaleString('pl-PL')}
+                        </span>
+                      )}
+                      {task.assignee && (
+                        <span>Przypisane: {task.assignee.displayName || task.assignee.email}</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-gray-300 group-hover:text-blue-600 transition-colors">
+                    →
                   </span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[task.status]}`}>
-                    {STATUS_LABELS[task.status]}
-                  </span>
-                  <h3 className="font-medium text-gray-900">{task.title}</h3>
-                </div>
-                {task.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-2">{task.description}</p>
-                )}
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  {task.dueAt && (
-                    <span className={overdue ? 'text-red-600 font-medium' : ''}>
-                      Termin: {new Date(task.dueAt).toLocaleString('pl-PL')}
-                    </span>
-                  )}
-                  {task.assignee && (
-                    <span>Przypisane: {task.assignee.displayName || task.assignee.email}</span>
-                  )}
                 </div>
               </div>
             );

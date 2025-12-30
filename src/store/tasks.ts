@@ -40,6 +40,7 @@ interface TasksState {
   loading: boolean;
   error: string | null;
   fetchTasks: () => Promise<void>;
+  fetchTask: (id: string) => Promise<Task>;
   createTask: (data: {
     title: string;
     description?: string;
@@ -88,6 +89,21 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
     }
+  },
+
+  fetchTask: async (id) => {
+    const token = useAuthStore.getState().accessToken;
+    const response = await fetch(`/api/tasks/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch task');
+    }
+
+    return await response.json();
   },
 
   createTask: async (data) => {

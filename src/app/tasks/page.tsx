@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { useRouter } from 'next/navigation';
+import { useTasksStore } from '@/store/tasks';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
 
-export default function TasksPage() {
+function TasksContent() {
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
+  const { fetchTask } = useTasksStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const [formKey, setFormKey] = useState(0);
@@ -20,6 +23,28 @@ export default function TasksPage() {
       router.push('/login');
     }
   }, [isAuthenticated, hasHydrated, router]);
+
+  // Handle ?id= query param to open specific task
+  useEffect(() => {
+    if (!hasHydrated || !isAuthenticated) return;
+
+    const taskId = searchParams.get('id');
+    if (taskId) {
+      const loadTask = async () => {
+        try {
+          const task = await fetchTask(taskId);
+          setEditingTask(task);
+          setShowForm(true);
+          setFormKey((prev) => prev + 1);
+          // Clear the URL param
+          router.replace('/tasks');
+        } catch (error) {
+          console.error('Failed to load task:', error);
+        }
+      };
+      loadTask();
+    }
+  }, [hasHydrated, isAuthenticated, searchParams, fetchTask, router]);
 
   const handleLogout = () => {
     logout();
@@ -92,5 +117,13 @@ export default function TasksPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={null}>
+      <TasksContent />
+    </Suspense>
   );
 }

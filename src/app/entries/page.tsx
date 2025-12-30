@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { useRouter } from 'next/navigation';
+import { useEntriesStore } from '@/store/entries';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { EntryList } from '@/components/entries/EntryList';
 import { EntryForm } from '@/components/entries/EntryForm';
 
-export default function EntriesPage() {
+function EntriesContent() {
   const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
+  const { fetchEntry } = useEntriesStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<any>(null);
   const [formKey, setFormKey] = useState(0);
@@ -20,6 +23,28 @@ export default function EntriesPage() {
       router.push('/login');
     }
   }, [isAuthenticated, hasHydrated, router]);
+
+  // Handle ?id= query param to open specific entry
+  useEffect(() => {
+    if (!hasHydrated || !isAuthenticated) return;
+
+    const entryId = searchParams.get('id');
+    if (entryId) {
+      const loadEntry = async () => {
+        try {
+          const entry = await fetchEntry(entryId);
+          setEditingEntry(entry);
+          setShowForm(true);
+          setFormKey((prev) => prev + 1);
+          // Clear the URL param
+          router.replace('/entries');
+        } catch (error) {
+          console.error('Failed to load entry:', error);
+        }
+      };
+      loadEntry();
+    }
+  }, [hasHydrated, isAuthenticated, searchParams, fetchEntry, router]);
 
   const handleLogout = () => {
     logout();
@@ -92,5 +117,13 @@ export default function EntriesPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function EntriesPage() {
+  return (
+    <Suspense fallback={null}>
+      <EntriesContent />
+    </Suspense>
   );
 }

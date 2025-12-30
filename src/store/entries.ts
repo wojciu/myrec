@@ -25,6 +25,7 @@ interface EntriesState {
   loading: boolean;
   error: string | null;
   fetchEntries: () => Promise<void>;
+  fetchEntry: (id: string) => Promise<Entry>;
   createEntry: (data: {
     title?: string;
     body: string;
@@ -64,6 +65,21 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
     }
+  },
+
+  fetchEntry: async (id) => {
+    const token = useAuthStore.getState().accessToken;
+    const response = await fetch(`/api/entries/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch entry');
+    }
+
+    return await response.json();
   },
 
   createEntry: async (data) => {
