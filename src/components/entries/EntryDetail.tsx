@@ -193,14 +193,7 @@ export function EntryDetail({ entryId, onClose, onEdit }: EntryDetailProps) {
             >
               Zamknij
             </button>
-            {entry.authorId === user?.id && (
-              <button
-                onClick={onEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Edytuj
-              </button>
-            )}
+            
           </div>
         </div>
       </div>

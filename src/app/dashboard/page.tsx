@@ -3,17 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useDashboardStore } from '@/store/dashboard';
+import { useEntriesStore } from '@/store/entries';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { RecentEntries } from '@/components/dashboard/RecentEntries';
 import { UrgentTasks } from '@/components/dashboard/UrgentTasks';
+import { EntryDetail } from '@/components/entries/EntryDetail';
 
 export default function DashboardPage() {
   const { isAuthenticated, hasHydrated } = useAuthStore();
   const { stats, fetchStats } = useDashboardStore();
+  const { fetchEntry } = useEntriesStore();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -35,6 +39,20 @@ export default function DashboardPage() {
     setRefreshing(false);
   };
 
+  const handleViewEntry = (entryId: string) => {
+    setViewingEntryId(entryId);
+  };
+
+  const handleDetailClose = () => {
+    setViewingEntryId(null);
+  };
+
+  const handleEditEntry = async () => {
+    const entry = await fetchEntry(viewingEntryId!);
+    setViewingEntryId(null);
+    router.push(`/entries?id=${entry.id}`);
+  };
+
   if (!hasHydrated) {
     return null;
   }
@@ -50,7 +68,7 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Przegląd</h2>
-          
+
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -115,10 +133,18 @@ export default function DashboardPage() {
 
         {/* Recent Entries and Urgent Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RecentEntries />
+          <RecentEntries onViewEntry={handleViewEntry} />
           <UrgentTasks />
         </div>
       </main>
+
+      {viewingEntryId && (
+        <EntryDetail
+          entryId={viewingEntryId}
+          onClose={handleDetailClose}
+          onEdit={handleEditEntry}
+        />
+      )}
     </div>
   );
 }

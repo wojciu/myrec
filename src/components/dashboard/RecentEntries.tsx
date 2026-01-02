@@ -24,7 +24,11 @@ const AVATAR_COLORS = [
   'bg-red-500',
 ];
 
-export function RecentEntries() {
+interface RecentEntriesProps {
+  onViewEntry?: (entryId: string) => void;
+}
+
+export function RecentEntries({ onViewEntry }: RecentEntriesProps) {
   const { stats, loading, fetchStats } = useDashboardStore();
   const { user } = useAuthStore();
   const router = useRouter();
@@ -32,6 +36,14 @@ export function RecentEntries() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  const handleEntryClick = (entryId: string) => {
+    if (onViewEntry) {
+      onViewEntry(entryId);
+    } else {
+      router.push(`/entries?id=${entryId}`);
+    }
+  };
 
   const getInitials = (displayName: string) => {
     const parts = displayName.split(' ');
@@ -90,7 +102,7 @@ export function RecentEntries() {
           {entries.map((entry: any) => (
             <div
               key={entry.id}
-              onClick={() => router.push(`/entries?id=${entry.id}`)}
+              onClick={() => handleEntryClick(entry.id)}
               className={`p-4 hover:bg-gray-50 cursor-pointer group border-l ${getEntryBorderClass(entry)}`}
             >
               <div className="flex items-center justify-between gap-2">
