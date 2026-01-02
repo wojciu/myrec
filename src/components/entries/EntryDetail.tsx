@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useEntriesStore } from '@/store/entries';
-import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api-client';
 
 interface EntryDetailProps {
   entryId: string;
@@ -12,8 +12,7 @@ interface EntryDetailProps {
 }
 
 export function EntryDetail({ entryId, onClose, onEdit }: EntryDetailProps) {
-  const { accessToken, user } = useAuthStore();
-  const router = useRouter();
+  const { user } = useAuthStore();
   const [entry, setEntry] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [markingAsRead, setMarkingAsRead] = useState(false);
@@ -22,17 +21,7 @@ export function EntryDetail({ entryId, onClose, onEdit }: EntryDetailProps) {
   useEffect(() => {
     const fetchEntry = async () => {
       try {
-        const response = await fetch(`/api/entries/${entryId}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch entry');
-        }
-
-        const data = await response.json();
+        const data = await api.get<any>(`/api/entries/${entryId}`);
         setEntry(data);
       } catch (err) {
         setError((err as Error).message);
@@ -41,26 +30,13 @@ export function EntryDetail({ entryId, onClose, onEdit }: EntryDetailProps) {
       }
     };
 
-    if (accessToken) {
-      fetchEntry();
-    }
-  }, [entryId, accessToken]);
+    fetchEntry();
+  }, [entryId]);
 
   const handleMarkAsRead = async () => {
     setMarkingAsRead(true);
     try {
-      const response = await fetch(`/api/entries/${entryId}/read`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark as read');
-      }
-
-      const readReceipt = await response.json();
+      const readReceipt = await api.post<any>(`/api/entries/${entryId}/read`, {});
 
       // Update entry with new read receipt
       setEntry((prev: any) => ({

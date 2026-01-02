@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { useAuthStore } from './auth';
+import { api } from '@/lib/api-client';
 
 interface Task {
   id: string;
@@ -73,18 +73,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   fetchTasks: async () => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch('/api/tasks', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
-      }
-
-      const data = await response.json();
+      const data = await api.get<{ tasks: Task[] }>('/api/tasks');
       set({ tasks: data.tasks, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
@@ -92,39 +81,13 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
 
   fetchTask: async (id) => {
-    const token = useAuthStore.getState().accessToken;
-    const response = await fetch(`/api/tasks/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch task');
-    }
-
-    return await response.json();
+    return api.get<Task>(`/api/tasks/${id}`);
   },
 
   createTask: async (data) => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create task');
-      }
-
-      const newTask = await response.json();
+      const newTask = await api.post<Task>('/api/tasks', data);
       set((state) => ({ tasks: [newTask, ...state.tasks], loading: false }));
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
@@ -135,22 +98,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   updateTask: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch(`/api/tasks/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update task');
-      }
-
-      const updatedTask = await response.json();
+      const updatedTask = await api.patch<Task>(`/api/tasks/${id}`, data);
       set((state) => ({
         tasks: state.tasks.map((t) => (t.id === id ? updatedTask : t)),
         loading: false,
@@ -164,19 +112,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   deleteTask: async (id) => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch(`/api/tasks/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete task');
-      }
-
+      await api.delete(`/api/tasks/${id}`);
       set((state) => ({
         tasks: state.tasks.filter((t) => t.id !== id),
         loading: false,

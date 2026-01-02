@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { useAuthStore } from './auth';
+import { api } from '@/lib/api-client';
 
 interface Entry {
   id: string;
@@ -58,18 +58,7 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
   fetchEntries: async () => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch('/api/entries', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch entries');
-      }
-
-      const data = await response.json();
+      const data = await api.get<{ entries: Entry[] }>('/api/entries');
       set({ entries: data.entries, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
@@ -77,39 +66,13 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
   },
 
   fetchEntry: async (id) => {
-    const token = useAuthStore.getState().accessToken;
-    const response = await fetch(`/api/entries/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch entry');
-    }
-
-    return await response.json();
+    return api.get<Entry>(`/api/entries/${id}`);
   },
 
   createEntry: async (data) => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch('/api/entries', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create entry');
-      }
-
-      const newEntry = await response.json();
+      const newEntry = await api.post<Entry>('/api/entries', data);
       set((state) => ({ entries: [newEntry, ...state.entries], loading: false }));
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
@@ -120,22 +83,7 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
   updateEntry: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch(`/api/entries/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update entry');
-      }
-
-      const updatedEntry = await response.json();
+      const updatedEntry = await api.patch<Entry>(`/api/entries/${id}`, data);
       set((state) => ({
         entries: state.entries.map((e) => (e.id === id ? updatedEntry : e)),
         loading: false,
@@ -149,19 +97,7 @@ export const useEntriesStore = create<EntriesState>((set, get) => ({
   deleteEntry: async (id) => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-      const response = await fetch(`/api/entries/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete entry');
-      }
-
+      await api.delete(`/api/entries/${id}`);
       set((state) => ({
         entries: state.entries.filter((e) => e.id !== id),
         loading: false,

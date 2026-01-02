@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { verifyRefreshToken, generateAccessToken } from '@/lib/auth';
+import { verifyRefreshToken, generateAccessToken, generateRefreshToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +20,13 @@ export async function POST(req: NextRequest) {
     // Check if user still exists
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        departmentId: true,
+      },
     });
 
     if (!user) {
@@ -29,7 +36,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate new access token
+    // Generate new tokens
     const tokenPayload = {
       userId: user.id,
       email: user.email,
@@ -37,9 +44,12 @@ export async function POST(req: NextRequest) {
     };
 
     const accessToken = generateAccessToken(tokenPayload);
+    const newRefreshToken = generateRefreshToken(tokenPayload);
 
     return NextResponse.json({
+      user,
       accessToken,
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
     console.error('Refresh token error:', error);

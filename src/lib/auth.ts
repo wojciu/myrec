@@ -16,8 +16,8 @@ export interface AuthUser extends TokenPayload {
   departmentId: string | null;
 }
 
-const ACCESS_TOKEN_EXPIRY = '15m';
-const REFRESH_TOKEN_EXPIRY = '7d';
+const ACCESS_TOKEN_EXPIRY = '24h';
+const REFRESH_TOKEN_EXPIRY = '30d';
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);

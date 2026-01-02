@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { useAuthStore } from './auth';
+import { api } from '@/lib/api-client';
 
 interface DashboardStats {
   openTasksCount: number;
@@ -25,24 +25,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   fetchStats: async () => {
     set({ loading: true, error: null });
     try {
-      const token = useAuthStore.getState().accessToken;
-
-      // Fetch entries and tasks in parallel
-      const [entriesRes, tasksRes] = await Promise.all([
-        fetch('/api/entries?limit=10', {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch('/api/tasks?limit=50', {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+      const [entriesData, tasksData] = await Promise.all([
+        api.get<{ entries: any[] }>('/api/entries?limit=10'),
+        api.get<{ tasks: any[] }>('/api/tasks?limit=50'),
       ]);
-
-      if (!entriesRes.ok || !tasksRes.ok) {
-        throw new Error('Failed to fetch dashboard data');
-      }
-
-      const entriesData = await entriesRes.json();
-      const tasksData = await tasksRes.json();
 
       const tasks = tasksData.tasks || [];
       const entries = entriesData.entries || [];
