@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useAdminStore } from '@/store/admin';
 import { useRouter } from 'next/navigation';
+import { Header } from '@/components/layout/Header';
 import { UsersList } from '@/components/admin/UsersList';
 import { UserForm } from '@/components/admin/UserForm';
 import { DepartmentsList } from '@/components/admin/DepartmentsList';
 import { DepartmentForm } from '@/components/admin/DepartmentForm';
 
 export default function AdminPage() {
-  const { user, isAuthenticated, hasHydrated, logout } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
   const { departments, fetchDepartments } = useAdminStore();
   const router = useRouter();
   const [tab, setTab] = useState<'users' | 'departments'>('users');
@@ -36,11 +37,6 @@ export default function AdminPage() {
 
     fetchDepartments();
   }, [isAuthenticated, hasHydrated, user, router, fetchDepartments]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
 
   const handleNewUser = () => {
     setEditingUser(null);
@@ -96,25 +92,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hotel Shift Journal</h1>
-            <p className="text-sm text-gray-500">Admin</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-600">
-              {user?.displayName} ({user?.role})
-            </span>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Wyloguj
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header subtitle="Admin" />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
