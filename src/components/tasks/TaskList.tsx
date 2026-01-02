@@ -1,6 +1,7 @@
 'use client';
 
 import { useTasksStore } from '@/store/tasks';
+import { useAuthStore } from '@/store/auth';
 import { useEffect, useState } from 'react';
 
 interface TaskListProps {
@@ -8,22 +9,24 @@ interface TaskListProps {
 }
 
 const STATUSES = [
-  { value: 'open', label: 'Otwarte' },
+  { value: 'open', label: 'Do zrobienia' },
   { value: 'in_progress', label: 'W trakcie' },
-  { value: 'done', label: 'Zakończone' },
+  { value: 'done', label: 'Zrobione' },
   { value: 'cancelled', label: 'Anulowane' },
 ] as const;
 
-const PRIORITIES = [
-  { value: 1, label: 'Wysoki', color: 'text-red-600 bg-red-50' },
-  { value: 2, label: 'Średni', color: 'text-yellow-600 bg-yellow-50' },
-  { value: 3, label: 'Niski', color: 'text-green-600 bg-green-50' },
-] as const;
+const PRIORITY_COLORS: Record<number, string> = {
+  1: 'text-red-600 bg-red-50 border-red-200',
+  2: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+  3: 'text-green-600 bg-green-50 border-green-200',
+};
 
 export function TaskList({ onEdit }: TaskListProps) {
   const { tasks, loading, error, fetchTasks, deleteTask, updateTask } = useTasksStore();
+  const { user } = useAuthStore();
   const [filter, setFilter] = useState<string>('all');
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTasks();
@@ -45,45 +48,58 @@ export function TaskList({ onEdit }: TaskListProps) {
   };
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
+    setUpdating(taskId);
     try {
       await updateTask(taskId, { status: newStatus });
     } catch (err) {
-      console.error('Failed to update status:', err);
+      console.error('Status update error:', err);
+    } finally {
+      setUpdating(null);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      open: 'bg-gray-100 text-gray-800',
-      in_progress: 'bg-blue-100 text-blue-800',
-      done: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+  const handleMarkDone = (taskId: string) => {
+    handleStatusChange(taskId, 'done');
+  };
+
+  const handleStart = (taskId: string) => {
+    handleStatusChange(taskId, 'in_progress');
+  };
+
+  const handleReopen = (taskId: string) => {
+    handleStatusChange(taskId, 'open');
   };
 
   const getStatusLabel = (status: string) => {
     return STATUSES.find((s) => s.value === status)?.label || status;
   };
 
-  const getPriorityInfo = (priority: number) => {
-    return PRIORITIES.find((p) => p.value === priority) || PRIORITIES[2];
-  };
-
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleString('pl-PL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+    return new Date(dateStr).toLocaleDateString('pl-PL', {
+      day: 'numeric',
+      month: 'short',
       hour: '2-digit',
-      minute: '2-digit',
+      minute: '2-digit'
     });
   };
 
   const isOverdue = (dueAt: string | null) => {
     if (!dueAt) return false;
     return new Date(dueAt) < new Date();
+  };
+
+  const isDoneToday = (updatedAt: string) => {
+    const updatedDate = new Date(updatedAt);
+    const today = new Date();
+    return updatedDate.toDateString() === today.toDateString();
+  };
+
+  const canReopen = (task: any) => {
+    // Administrator zawsze może otworzyć
+    if (user?.role === 'admin') return true;
+    // Inni użytkownicy tylko jeśli zadanie było zrobione dzisiaj
+    return isDoneToday(task.updatedAt);
   };
 
   if (loading && tasks.length === 0) {
@@ -128,90 +144,134 @@ export function TaskList({ onEdit }: TaskListProps) {
           Brak zadań
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filteredTasks.map((task) => {
-            const priorityInfo = getPriorityInfo(task.priority);
             const overdue = isOverdue(task.dueAt);
 
             return (
               <div
                 key={task.id}
-                className={`bg-white border rounded-lg p-4 hover:shadow-md transition-shadow ${
+                className={`bg-white border rounded-lg p-3 hover:shadow-md transition-shadow ${
                   overdue ? 'border-red-300 bg-red-50' : 'border-gray-200'
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityInfo.color}`}>
-                        {priorityInfo.label}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    {/* Priorytet + tytuł */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium border ${PRIORITY_COLORS[task.priority]}`}>
+                        {task.priority === 1 ? '!' : task.priority === 2 ? '!!' : '•'}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                      <h3 className="font-medium text-gray-900 truncate">{task.title}</h3>
+                    </div>
+
+                    {/* Status + metadata */}
+                    <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                      <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">
                         {getStatusLabel(task.status)}
                       </span>
-                      <h3 className="font-semibold text-gray-900">{task.title}</h3>
-                    </div>
-
-                    {task.description && (
-                      <p className="text-gray-700 mb-2">{task.description}</p>
-                    )}
-
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
-                      {task.assignee && (
-                        <span>
-                          Przypisane: {task.assignee.displayName || task.assignee.email}
-                        </span>
-                      )}
-                      {task.assigneeDepartment && (
-                        <span>
-                          Dział: {task.assigneeDepartment.name}
-                        </span>
-                      )}
                       {task.dueAt && (
                         <span className={overdue ? 'text-red-600 font-medium' : ''}>
-                          Termin: {formatDate(task.dueAt)}
+                          {overdue && '⚠️ '}
+                          {formatDate(task.dueAt)}
                         </span>
                       )}
-                      {task.reminderAt && (
-                        <span>
-                          Przypomnienie: {formatDate(task.reminderAt)}
-                        </span>
+                      {task.assignee && (
+                        <span>👤 {task.assignee.displayName || task.assignee.email}</span>
                       )}
-                      <span>
-                        Utworzono: {formatDate(task.createdAt)}
-                      </span>
+                      {task.assigneeDepartment && (
+                        <span>🏢 {task.assigneeDepartment.name}</span>
+                      )}
                     </div>
+
+                    {/* Description - opcjonalnie */}
+                    {task.description && (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{task.description}</p>
+                    )}
                   </div>
 
-                  <div className="flex flex-col items-end gap-2">
-                    <select
-                      value={task.status}
-                      onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                      className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-400"
-                      title="Zmień status"
+                  {/* Quick actions */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {task.status === 'open' && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStart(task.id);
+                          }}
+                          disabled={updating === task.id}
+                          className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                          title="Oznacz jako w trakcie"
+                        >
+                          {updating === task.id ? '...' : '▶ Start'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkDone(task.id);
+                          }}
+                          disabled={updating === task.id}
+                          className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+                          title="Oznacz jako zrobione"
+                        >
+                          {updating === task.id ? '...' : '✓ Zrobione'}
+                        </button>
+                      </>
+                    )}
+                    {task.status === 'in_progress' && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkDone(task.id);
+                          }}
+                          disabled={updating === task.id}
+                          className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+                          title="Oznacz jako zrobione"
+                        >
+                          {updating === task.id ? '...' : '✓ Zrobione'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReopen(task.id);
+                          }}
+                          disabled={updating === task.id}
+                          className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 disabled:bg-gray-400"
+                          title="Oznacz jako otwarte"
+                        >
+                          {updating === task.id ? '...' : '↺ Otwórz'}
+                        </button>
+                      </>
+                    )}
+                    {task.status === 'done' && canReopen(task) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReopen(task.id);
+                        }}
+                        disabled={updating === task.id}
+                        className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 disabled:bg-gray-400"
+                        title="Oznacz jako otwarte"
+                      >
+                        {updating === task.id ? '...' : '↺ Otwórz'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onEdit(task)}
+                      className="px-3 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                      title="Edytuj"
                     >
-                      {STATUSES.map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onEdit(task)}
-                        className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
-                      >
-                        Edytuj
-                      </button>
-                      <button
-                        onClick={() => handleDelete(task.id)}
-                        disabled={deleting === task.id}
-                        className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-md disabled:text-gray-400"
-                      >
-                        {deleting === task.id ? 'Usuwanie...' : 'Usuń'}
-                      </button>
-                    </div>
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(task.id)}
+                      disabled={deleting === task.id || updating === task.id}
+                      className="px-3 py-1 text-xs text-red-600 border border-red-300 rounded hover:bg-red-50 disabled:bg-gray-100 disabled:text-gray-400"
+                      title="Usuń"
+                    >
+                      {deleting === task.id ? '...' : '🗑️'}
+                    </button>
                   </div>
                 </div>
               </div>

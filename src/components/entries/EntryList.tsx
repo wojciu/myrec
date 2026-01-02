@@ -195,7 +195,7 @@ export function EntryList({ onEdit, onView }: EntryListProps) {
                         {entry.readBy.slice(0, 5).map((readBy: any) => (
                           <div
                             key={readBy.id}
-                            className={`w-6 h-6 rounded-full ${getAvatarColor(readBy.user.displayName)} text-white text-xs flex items-center justify-center font-medium border-2 border-white`}
+                            className={`w-7 h-7 rounded-full ${getAvatarColor(readBy.user.displayName)} text-white text-xs flex items-center justify-center font-medium border-1 border-white`}
                             title={`${readBy.user.displayName} - ${formatDate(readBy.readAt)}`}
                           >
                             {getInitials(readBy.user.displayName)}

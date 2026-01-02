@@ -127,7 +127,7 @@ export function RecentEntries({ onViewEntry }: RecentEntriesProps) {
                           {entry.readBy.slice(0, 4).map((readBy: any) => (
                             <div
                               key={readBy.id}
-                              className={`w-5 h-5 rounded-full ${getAvatarColor(readBy.user.displayName)} text-white text-xs flex items-center justify-center font-medium border-2 border-white`}
+                              className={`w-6 h-6 rounded-full ${getAvatarColor(readBy.user.displayName)} text-white text-xs flex items-center justify-center font-medium border-1 border-white`}
                               title={`${readBy.user.displayName} - ${new Date(readBy.readAt).toLocaleString('pl-PL')}`}
                             >
                               {getInitials(readBy.user.displayName)}
