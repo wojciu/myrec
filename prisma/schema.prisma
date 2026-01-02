@@ -12,16 +12,17 @@ datasource db {
 }
 
 model User {
-  id             String      @id @default(uuid())
-  email          String      @unique
+  id             String       @id @default(uuid())
+  email          String       @unique
   passwordHash   String
   displayName    String
-  role           String      @default("receptionist")
+  role           String       @default("receptionist")
   departmentId   String?
-  department     Department? @relation(fields: [departmentId], references: [id])
-  createdEntries Entry[]     @relation("AuthorEntries")
-  assignedTasks  Task[]      @relation("AssigneeTasks")
-  createdAt      DateTime    @default(now())
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  createdEntries Entry[]      @relation("AuthorEntries")
+  readEntries    EntryReadBy[] @relation("UserReadEntries")
+  assignedTasks  Task[]       @relation("AssigneeTasks")
+  createdAt      DateTime     @default(now())
 }
 
 model Department {
@@ -41,10 +42,22 @@ model Entry {
   body                 String
   category             String
   visibleToDepartments Department[] @relation("VisibleToEntries")
+  readBy               EntryReadBy[]
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
   tasks                Task[]
   attachments          Attachment[]
+}
+
+model EntryReadBy {
+  id        String   @id @default(uuid())
+  entryId   String
+  entry     Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("UserReadEntries", fields: [userId], references: [id], onDelete: Cascade)
+  readAt    DateTime @default(now())
+
+  @@unique([entryId, userId])
 }
 
 model Task {

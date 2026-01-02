@@ -26,6 +26,22 @@ export async function GET(
             name: true,
           },
         },
+        readBy: {
+          select: {
+            id: true,
+            userId: true,
+            readAt: true,
+            user: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
+          },
+          orderBy: {
+            readAt: 'asc',
+          },
+        },
         tasks: true,
         attachments: true,
       },
@@ -107,6 +123,22 @@ export async function PATCH(
           select: {
             id: true,
             name: true,
+          },
+        },
+        readBy: {
+          select: {
+            id: true,
+            userId: true,
+            readAt: true,
+            user: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
+          },
+          orderBy: {
+            readAt: 'asc',
           },
         },
       },

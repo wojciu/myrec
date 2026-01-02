@@ -18,6 +18,15 @@ interface Entry {
     id: string;
     name: string;
   }>;
+  readBy?: Array<{
+    id: string;
+    userId: string;
+    readAt: string;
+    user: {
+      id: string;
+      displayName: string;
+    };
+  }>;
 }
 
 interface EntriesState {

@@ -1,17 +1,22 @@
 'use client';
 
 import { useEntriesStore } from '@/store/entries';
+import { useAuthStore } from '@/store/auth';
 import { useEffect, useState } from 'react';
 
 interface EntryListProps {
   onEdit: (entry: any) => void;
+  onView: (entryId: string) => void;
 }
 
 const CATEGORIES = ['info', 'warning', 'incident', 'guest', 'staff'] as const;
 
-export function EntryList({ onEdit }: EntryListProps) {
+type FilterType = 'all' | 'unread' | 'info' | 'warning' | 'incident' | 'guest' | 'staff';
+
+export function EntryList({ onEdit, onView }: EntryListProps) {
   const { entries, loading, error, fetchEntries, deleteEntry } = useEntriesStore();
-  const [filter, setFilter] = useState<string>('all');
+  const { user } = useAuthStore();
+  const [filter, setFilter] = useState<FilterType>('all');
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,6 +25,9 @@ export function EntryList({ onEdit }: EntryListProps) {
 
   const filteredEntries = entries.filter((entry) => {
     if (filter === 'all') return true;
+    if (filter === 'unread') {
+      return !entry.readBy?.some((r: any) => r.userId === user?.id);
+    }
     return entry.category === filter;
   });
 
@@ -54,6 +62,55 @@ export function EntryList({ onEdit }: EntryListProps) {
     });
   };
 
+  const getInitials = (displayName: string) => {
+    const parts = displayName.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return displayName.slice(0, 2).toUpperCase();
+  };
+
+  const getAvatarColor = (displayName: string) => {
+    const colors = [
+      'bg-blue-500',
+      'bg-green-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-teal-500',
+      'bg-orange-500',
+      'bg-red-500',
+    ];
+    let hash = 0;
+    for (let i = 0; i < displayName.length; i++) {
+      hash = displayName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  const isEntryReadByUser = (entry: any) => {
+    if (!user) return true;
+    return entry.readBy?.some((r: any) => r.userId === user.id);
+  };
+
+  const isFromToday = (dateStr: string) => {
+    const entryDate = new Date(dateStr);
+    const today = new Date();
+    return entryDate.toDateString() === today.toDateString();
+  };
+
+  const getEntryBorderClass = (entry: any) => {
+    if (isEntryReadByUser(entry)) return 'border-gray-200';
+    if (isFromToday(entry.createdAt)) return 'border-yellow-300 border-l-4';
+    return 'border-red-300 border-l-4';
+  };
+
+  const getEntryBgClass = (entry: any) => {
+    if (isEntryReadByUser(entry)) return 'bg-white';
+    if (isFromToday(entry.createdAt)) return 'bg-yellow-50';
+    return 'bg-red-50';
+  };
+
   if (loading && entries.length === 0) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -73,15 +130,18 @@ export function EntryList({ onEdit }: EntryListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Dziennik zmian</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Dziennik zmian</h2>
         <div className="flex items-center gap-2">
+          <button onClick={(e) => setFilter('all')} className="px-3 py-1 text-sm text-gray-600 hover:bg-blue-50 rounded-md disabled:text-gray-400">Wszystkie</button>
+          <button onClick={(e) => setFilter('unread')} className="px-3 py-1 text-sm text-gray-600 hover:bg-blue-50 rounded-md disabled:text-gray-400">Nieprzeczytane</button>
           <label className="text-sm text-gray-600">Filtry:</label>
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setFilter(e.target.value as FilterType)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
           >
             <option value="all">Wszystkie</option>
+            <option value="unread">Nieprzeczytane</option>
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -100,11 +160,12 @@ export function EntryList({ onEdit }: EntryListProps) {
           {filteredEntries.map((entry) => (
             <div
               key={entry.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              className={`${getEntryBgClass(entry)} ${getEntryBorderClass(entry)} border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer`}
+              onClick={() => onView(entry.id)}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(entry.category)}`}>
                       {entry.category}
                     </span>
@@ -113,9 +174,9 @@ export function EntryList({ onEdit }: EntryListProps) {
                     )}
                   </div>
 
-                  <p className="text-gray-700 whitespace-pre-wrap mb-2">{entry.body}</p>
+                  <p className="text-gray-700 whitespace-pre-wrap mb-2 line-clamp-2">{entry.body}</p>
 
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
                     <span>
                       {entry.author?.displayName || entry.author?.email || 'Nieznany'}
                     </span>
@@ -126,17 +187,46 @@ export function EntryList({ onEdit }: EntryListProps) {
                       </span>
                     )}
                   </div>
+
+                  {entry.readBy && entry.readBy.length > 0 && (
+                    <div className="flex items-center gap-1 mt-3">
+                      <span className="text-xs text-gray-500 mr-1">Przeczytano:</span>
+                      <div className="flex -space-x-1">
+                        {entry.readBy.slice(0, 5).map((readBy: any) => (
+                          <div
+                            key={readBy.id}
+                            className={`w-6 h-6 rounded-full ${getAvatarColor(readBy.user.displayName)} text-white text-xs flex items-center justify-center font-medium border-2 border-white`}
+                            title={`${readBy.user.displayName} - ${formatDate(readBy.readAt)}`}
+                          >
+                            {getInitials(readBy.user.displayName)}
+                          </div>
+                        ))}
+                        {entry.readBy.length > 5 && (
+                          <div className="w-6 h-6 rounded-full bg-gray-400 text-white text-xs flex items-center justify-center font-medium border-2 border-white">
+                            +{entry.readBy.length - 5}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500 ml-2">({entry.readBy.length})</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onEdit(entry)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(entry);
+                    }}
                     className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
                   >
                     Edytuj
                   </button>
                   <button
-                    onClick={() => handleDelete(entry.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(entry.id);
+                    }}
                     disabled={deleting === entry.id}
                     className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-md disabled:text-gray-400"
                   >

@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { EntryList } from '@/components/entries/EntryList';
 import { EntryForm } from '@/components/entries/EntryForm';
+import { EntryDetail } from '@/components/entries/EntryDetail';
 
 function EntriesContent() {
   const { isAuthenticated, hasHydrated } = useAuthStore();
@@ -14,7 +15,9 @@ function EntriesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [editingEntry, setEditingEntry] = useState<any>(null);
+  const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
@@ -25,32 +28,28 @@ function EntriesContent() {
     }
   }, [isAuthenticated, hasHydrated, router]);
 
-  // Handle ?id= query param to open specific entry
+  // Handle ?id= query param to open specific entry (now opens detail, not edit)
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated) return;
 
     const entryId = searchParams.get('id');
     if (entryId) {
-      const loadEntry = async () => {
-        try {
-          const entry = await fetchEntry(entryId);
-          setEditingEntry(entry);
-          setShowForm(true);
-          setFormKey((prev) => prev + 1);
-          // Clear the URL param
-          router.replace('/entries');
-        } catch (error) {
-          console.error('Failed to load entry:', error);
-        }
-      };
-      loadEntry();
+      setViewingEntryId(entryId);
+      setShowDetail(true);
+      // Clear the URL param
+      router.replace('/entries');
     }
-  }, [hasHydrated, isAuthenticated, searchParams, fetchEntry, router]);
+  }, [hasHydrated, isAuthenticated, searchParams, router]);
 
   const handleNewEntry = () => {
     setEditingEntry(null);
     setShowForm(true);
     setFormKey((prev) => prev + 1);
+  };
+
+  const handleViewEntry = (entryId: string) => {
+    setViewingEntryId(entryId);
+    setShowDetail(true);
   };
 
   const handleEditEntry = (entry: any) => {
@@ -64,6 +63,11 @@ function EntriesContent() {
     setEditingEntry(null);
   };
 
+  const handleDetailClose = () => {
+    setShowDetail(false);
+    setViewingEntryId(null);
+  };
+
   if (!hasHydrated) {
     return null;
   }
@@ -74,7 +78,7 @@ function EntriesContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header subtitle="Wpisy dziennika" />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
@@ -86,7 +90,7 @@ function EntriesContent() {
           </button>
         </div>
 
-        <EntryList onEdit={handleEditEntry} />
+        <EntryList onEdit={handleEditEntry} onView={handleViewEntry} />
 
         {showForm && (
           <EntryForm
@@ -94,6 +98,18 @@ function EntriesContent() {
             entry={editingEntry}
             onClose={() => setShowForm(false)}
             onSuccess={handleFormSuccess}
+          />
+        )}
+
+        {showDetail && viewingEntryId && (
+          <EntryDetail
+            entryId={viewingEntryId}
+            onClose={handleDetailClose}
+            onEdit={() => {
+              handleDetailClose();
+              // Fetch the entry for editing
+              fetchEntry(viewingEntryId).then(handleEditEntry);
+            }}
           />
         )}
       </main>

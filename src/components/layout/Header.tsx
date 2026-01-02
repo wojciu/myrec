@@ -38,7 +38,7 @@ export function Header({ title, subtitle }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hotel Shift Journal</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{title || 'Hotel Shift Journal'}</h1>
             {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
           </div>
           <div className="flex items-center gap-2">

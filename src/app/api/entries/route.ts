@@ -64,6 +64,22 @@ export async function GET(req: NextRequest) {
               name: true,
             },
           },
+          readBy: {
+            select: {
+              id: true,
+              userId: true,
+              readAt: true,
+              user: {
+                select: {
+                  id: true,
+                  displayName: true,
+                },
+              },
+            },
+            orderBy: {
+              readAt: 'asc',
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -127,6 +143,22 @@ export async function POST(req: NextRequest) {
           select: {
             id: true,
             name: true,
+          },
+        },
+        readBy: {
+          select: {
+            id: true,
+            userId: true,
+            readAt: true,
+            user: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
+          },
+          orderBy: {
+            readAt: 'asc',
           },
         },
       },
