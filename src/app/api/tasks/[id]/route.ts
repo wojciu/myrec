@@ -13,6 +13,13 @@ export async function GET(
     const task = await prisma.task.findUnique({
       where: { id },
       include: {
+        createdBy: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
         assignee: {
           select: {
             id: true,
@@ -43,12 +50,21 @@ export async function GET(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    // Check access - user can see tasks assigned to them, their department, tasks from entries they created, or unassigned tasks
+    // Admin sees all tasks
+    if (authUser.role === 'admin') {
+      return NextResponse.json(task);
+    }
+
+    // Check access - user can see tasks based on visibility rules:
+    // 1. Unassigned tasks (no person, no department)
+    // 2. Tasks assigned to user's department (but not to a specific person)
+    // 3. Tasks assigned specifically to this user
+    // 4. Tasks created by the user
     const hasAccess =
+      (task.assigneeId === null && task.assigneeDepartmentId === null) ||
+      (task.assigneeDepartmentId === authUser.departmentId && task.assigneeId === null) ||
       task.assigneeId === authUser.userId ||
-      task.assigneeDepartmentId === authUser.departmentId ||
-      task.entry?.authorId === authUser.userId ||
-      (task.assigneeId === null && task.assigneeDepartmentId === null);
+      task.createdById === authUser.userId;
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -82,11 +98,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    // Check access - user can update tasks assigned to them, their department, or unassigned tasks
-    const hasAccess =
-      existingTask.assigneeId === authUser.userId ||
-      existingTask.assigneeDepartmentId === authUser.departmentId ||
-      (existingTask.assigneeId === null && existingTask.assigneeDepartmentId === null);
+    // Admin can update all tasks
+    let hasAccess = authUser.role === 'admin';
+
+    // Non-admin users can update tasks based on visibility rules
+    if (!hasAccess) {
+      hasAccess =
+        (existingTask.assigneeId === null && existingTask.assigneeDepartmentId === null) ||
+        (existingTask.assigneeDepartmentId === authUser.departmentId && existingTask.assigneeId === null) ||
+        existingTask.assigneeId === authUser.userId ||
+        existingTask.createdById === authUser.userId;
+    }
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -136,6 +158,13 @@ export async function PATCH(
       where: { id },
       data: updateData,
       include: {
+        createdBy: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
         assignee: {
           select: {
             id: true,
@@ -185,11 +214,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    // Check access - user can delete tasks assigned to them, their department, or unassigned tasks
-    const hasAccess =
-      existingTask.assigneeId === authUser.userId ||
-      existingTask.assigneeDepartmentId === authUser.departmentId ||
-      (existingTask.assigneeId === null && existingTask.assigneeDepartmentId === null);
+    // Admin can delete all tasks
+    let hasAccess = authUser.role === 'admin';
+
+    // Non-admin users can delete tasks based on visibility rules
+    if (!hasAccess) {
+      hasAccess =
+        (existingTask.assigneeId === null && existingTask.assigneeDepartmentId === null) ||
+        (existingTask.assigneeDepartmentId === authUser.departmentId && existingTask.assigneeId === null) ||
+        existingTask.assigneeId === authUser.userId ||
+        existingTask.createdById === authUser.userId;
+    }
 
     if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

@@ -15,28 +15,43 @@ export async function GET(req: NextRequest) {
     const assigneeId = searchParams.get('assigneeId');
     const assigneeDepartmentId = searchParams.get('assigneeDepartmentId');
 
-    const where: any = {
-      OR: [
-        // User can see tasks assigned to them
-        { assigneeId: authUser.userId },
-        // Or tasks assigned to their department
-        { assigneeDepartmentId: authUser.departmentId },
-        // Or tasks they created (via entry)
-        {
-          entry: {
-            authorId: authUser.userId,
-          },
-        },
-        // Or unassigned tasks (no assignee and no department)
-        {
-          AND: [
-            { assigneeId: null },
-            { assigneeDepartmentId: null },
-          ],
-        },
-      ],
-    };
+    // Build visibility filter based on user role and assignments
+    let where: any;
 
+    if (authUser.role === 'admin') {
+      // Admin sees all tasks
+      where = {};
+    } else {
+      // Non-admin users see tasks based on visibility rules:
+      // 1. Tasks not assigned to anyone (visible to everyone)
+      // 2. Tasks assigned to user's department (no specific assignee)
+      // 3. Tasks assigned to the user specifically
+      // 4. Tasks created by the user
+      where = {
+        OR: [
+          // Rule 1: Unassigned tasks (no person, no department) - visible to everyone
+          {
+            AND: [
+              { assigneeId: null },
+              { assigneeDepartmentId: null },
+            ],
+          },
+          // Rule 2: Tasks assigned to user's department (but not to a specific person)
+          {
+            AND: [
+              { assigneeDepartmentId: authUser.departmentId },
+              { assigneeId: null },
+            ],
+          },
+          // Rule 3: Tasks assigned specifically to this user
+          { assigneeId: authUser.userId },
+          // Rule 4: Tasks created by the user
+          { createdById: authUser.userId },
+        ],
+      };
+    }
+
+    // Apply additional filters
     if (status) {
       where.status = status;
     }
@@ -57,6 +72,13 @@ export async function GET(req: NextRequest) {
       prisma.task.findMany({
         where,
         include: {
+          createdBy: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
+          },
           assignee: {
             select: {
               id: true,
@@ -140,6 +162,7 @@ export async function POST(req: NextRequest) {
         title,
         description,
         priority: priority || 2,
+        createdById: authUser.userId,
         assigneeId,
         assigneeDepartmentId,
         entryId,
@@ -147,6 +170,13 @@ export async function POST(req: NextRequest) {
         reminderAt: reminderAt ? new Date(reminderAt) : null,
       },
       include: {
+        createdBy: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
         assignee: {
           select: {
             id: true,
