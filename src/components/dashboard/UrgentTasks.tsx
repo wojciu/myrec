@@ -136,17 +136,7 @@ export function UrgentTasks() {
                         >
                           {updating === task.id ? '...' : '▶ Start'}
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMarkDone(task.id);
-                          }}
-                          disabled={updating === task.id}
-                          className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
-                          title="Oznacz jako zrobione"
-                        >
-                          {updating === task.id ? '...' : '✓ Zrobione'}
-                        </button>
+                        
                       </>
                     )}
                     {task.status === 'in_progress' && (
