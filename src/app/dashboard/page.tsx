@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useDashboardStore } from '@/store/dashboard';
 import { useEntriesStore } from '@/store/entries';
@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -28,10 +29,11 @@ export default function DashboardPage() {
   }, [isAuthenticated, hasHydrated, router]);
 
   useEffect(() => {
-    if (hasHydrated && isAuthenticated) {
+    if (hasHydrated && isAuthenticated && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
       fetchStats();
     }
-  }, [isAuthenticated, hasHydrated, fetchStats]);
+  }, [isAuthenticated, hasHydrated]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

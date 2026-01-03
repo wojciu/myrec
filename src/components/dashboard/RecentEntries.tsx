@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useDashboardStore } from '@/store/dashboard';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
@@ -29,13 +28,9 @@ interface RecentEntriesProps {
 }
 
 export function RecentEntries({ onViewEntry }: RecentEntriesProps) {
-  const { stats, loading, fetchStats } = useDashboardStore();
+  const { stats, loading } = useDashboardStore();
   const { user } = useAuthStore();
   const router = useRouter();
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
 
   const handleEntryClick = (entryId: string) => {
     if (onViewEntry) {

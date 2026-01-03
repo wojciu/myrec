@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useDashboardStore } from '@/store/dashboard';
 import { useTasksStore } from '@/store/tasks';
 import { useRouter } from 'next/navigation';
@@ -26,10 +26,6 @@ export function UrgentTasks() {
   const { updateTask } = useTasksStore();
   const router = useRouter();
   const [updating, setUpdating] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     setUpdating(taskId);
