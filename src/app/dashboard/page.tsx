@@ -112,7 +112,6 @@ export default function DashboardPage() {
           {/* LEFT COLUMN - ENTRIES (2/5 width) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Unread Entries Stat Card */}
-              <p className="text-lg font-semibold text-black">Wpisy</p>
 
             <div
               onClick={() => router.push('/entries?filter=unread')}
@@ -120,7 +119,7 @@ export default function DashboardPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">Nieprzeczytane wpisy</p>
+                  <p className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">Nieprzeczytane wpisy dziennika</p>
                   <p className="text-3xl font-bold text-indigo-900 mt-2">{stats?.unreadEntriesCount || 0}</p>
                 </div>
                 <div className="w-14 h-14 bg-indigo-200 rounded-xl flex items-center justify-center">
@@ -132,7 +131,7 @@ export default function DashboardPage() {
             {/* New Entry Button */}
             <button
               onClick={() => setShowEntryForm(true)}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 font-medium transition-colors"
+              className=" px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 font-medium transition-colors"
             >
               <span className="text-lg">+</span> Nowy wpis
             </button>
@@ -150,12 +149,14 @@ export default function DashboardPage() {
                 onClick={() => router.push('/tasks?status=open')}
                 className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-lg p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all"
               >
-                <div className="flex flex-col items-center text-center">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Zadania do zrobienia</p>
+                    <p className="text-2xl font-bold text-slate-900">{stats?.openTasksCount || 0}</p>
+                  </div>
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
                     <span className="text-lg">📋</span>
                   </div>
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Otwarte</p>
-                  <p className="text-2xl font-bold text-slate-900">{stats?.openTasksCount || 0}</p>
                 </div>
               </div>
 
@@ -163,12 +164,14 @@ export default function DashboardPage() {
                 onClick={() => router.push('/tasks?status=in_progress')}
                 className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-4 cursor-pointer hover:shadow-md hover:border-amber-300 transition-all"
               >
-                <div className="flex flex-col items-center text-center">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-1">W trakcie</p>
+                    <p className="text-2xl font-bold text-amber-900">{stats?.inProgressTasksCount || 0}</p>
+                  </div>
                   <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center mb-2">
                     <span className="text-lg">⚙️</span>
                   </div>
-                  <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-1">W trakcie</p>
-                  <p className="text-2xl font-bold text-amber-900">{stats?.inProgressTasksCount || 0}</p>
                 </div>
               </div>
 
@@ -176,12 +179,14 @@ export default function DashboardPage() {
                 onClick={() => router.push('/tasks?filter=overdue')}
                 className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg p-4 cursor-pointer hover:shadow-md hover:border-red-300 transition-all"
               >
-                <div className="flex flex-col items-center text-center">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-red-700 uppercase tracking-wide mb-1">Po terminie</p>
+                    <p className="text-2xl font-bold text-red-900">{stats?.overdueTasksCount || 0}</p>
+                  </div>
                   <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center mb-2">
                     <span className="text-lg">⚠️</span>
                   </div>
-                  <p className="text-xs font-medium text-red-700 uppercase tracking-wide mb-1">Po terminie</p>
-                  <p className="text-2xl font-bold text-red-900">{stats?.overdueTasksCount || 0}</p>
                 </div>
               </div>
             </div>
@@ -189,7 +194,7 @@ export default function DashboardPage() {
             {/* New Task Button */}
             <button
               onClick={() => setShowTaskForm(true)}
-              className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center gap-2 font-medium transition-colors"
+              className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center gap-2 font-medium transition-colors"
             >
               <span className="text-lg">+</span> Nowe zadanie
             </button>
