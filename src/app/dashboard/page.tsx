@@ -9,6 +9,8 @@ import { Header } from '@/components/layout/Header';
 import { RecentEntries } from '@/components/dashboard/RecentEntries';
 import { UrgentTasks } from '@/components/dashboard/UrgentTasks';
 import { EntryDetail } from '@/components/entries/EntryDetail';
+import { EntryForm } from '@/components/entries/EntryForm';
+import { TaskForm } from '@/components/tasks/TaskForm';
 import { usePollingRefresh } from '@/hooks/usePollingRefresh';
 import { api } from '@/lib/api-client';
 
@@ -19,6 +21,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
+  const [showEntryForm, setShowEntryForm] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -70,6 +74,14 @@ export default function DashboardPage() {
     router.push(`/entries?id=${entry.id}`);
   };
 
+  const handleEntryFormSuccess = () => {
+    fetchStats();
+  };
+
+  const handleTaskFormSuccess = () => {
+    fetchStats();
+  };
+
   if (!hasHydrated) {
     return null;
   }
@@ -100,6 +112,7 @@ export default function DashboardPage() {
           {/* LEFT COLUMN - ENTRIES (2/5 width) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Unread Entries Stat Card */}
+
             <div
               onClick={() => router.push('/entries?filter=unread')}
               className="bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg p-5 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all"
@@ -117,7 +130,7 @@ export default function DashboardPage() {
 
             {/* New Entry Button */}
             <button
-              onClick={() => router.push('/entries?new=true')}
+              onClick={() => setShowEntryForm(true)}
               className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 font-medium transition-colors"
             >
               <span className="text-lg">+</span> Nowy wpis
@@ -129,6 +142,7 @@ export default function DashboardPage() {
 
           {/* RIGHT COLUMN - TASKS (3/5 width) */}
           <div className="lg:col-span-3 space-y-6">
+
             {/* Task Stats Cards - 3 in a row */}
             <div className="grid grid-cols-3 gap-3">
               <div
@@ -173,7 +187,7 @@ export default function DashboardPage() {
 
             {/* New Task Button */}
             <button
-              onClick={() => router.push('/tasks?new=true')}
+              onClick={() => setShowTaskForm(true)}
               className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center gap-2 font-medium transition-colors"
             >
               <span className="text-lg">+</span> Nowe zadanie
@@ -190,6 +204,24 @@ export default function DashboardPage() {
           entryId={viewingEntryId}
           onClose={handleDetailClose}
           onEdit={handleEditEntry}
+        />
+      )}
+
+      {/* Entry Form Modal */}
+      {showEntryForm && (
+        <EntryForm
+          entry={null}
+          onClose={() => setShowEntryForm(false)}
+          onSuccess={handleEntryFormSuccess}
+        />
+      )}
+
+      {/* Task Form Modal */}
+      {showTaskForm && (
+        <TaskForm
+          task={null}
+          onClose={() => setShowTaskForm(false)}
+          onSuccess={handleTaskFormSuccess}
         />
       )}
     </div>
