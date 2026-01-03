@@ -10,9 +10,7 @@ interface EntryListProps {
   initialFilter?: string | null;
 }
 
-const CATEGORIES = ['info', 'warning', 'incident', 'guest', 'staff'] as const;
-
-type FilterType = 'all' | 'unread' | 'info' | 'warning' | 'incident' | 'guest' | 'staff';
+type FilterType = 'all' | 'unread';
 
 export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
   const { entries, loading, error, fetchEntries, deleteEntry } = useEntriesStore();
@@ -38,7 +36,7 @@ export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
     if (filter === 'unread') {
       return !entry.readBy?.some((r: any) => r.userId === user?.id);
     }
-    return entry.category === filter;
+    return true;
   });
 
   const handleDelete = async (id: string) => {
@@ -49,17 +47,6 @@ export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
     } finally {
       setDeleting(null);
     }
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      info: 'bg-blue-100 text-blue-800',
-      warning: 'bg-yellow-100 text-yellow-800',
-      incident: 'bg-red-100 text-red-800',
-      guest: 'bg-purple-100 text-purple-800',
-      staff: 'bg-green-100 text-green-800',
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
   const formatDate = (dateStr: string) => {
@@ -142,22 +129,8 @@ export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">Dziennik zmian</h2>
         <div className="flex items-center gap-2">
-          <button onClick={(e) => setFilter('all')} className="px-3 py-1 text-sm text-gray-600 hover:bg-blue-50 rounded-md disabled:text-gray-400">Wszystkie</button>
-          <button onClick={(e) => setFilter('unread')} className="px-3 py-1 text-sm text-gray-600 hover:bg-blue-50 rounded-md disabled:text-gray-400">Nieprzeczytane</button>
-          <label className="text-sm text-gray-600">Filtry:</label>
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as FilterType)}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
-          >
-            <option value="all">Wszystkie</option>
-            <option value="unread">Nieprzeczytane</option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </option>
-            ))}
-          </select>
+          <button onClick={() => setFilter('all')} className="px-3 py-1 text-sm text-gray-600 hover:bg-blue-50 rounded-md disabled:text-gray-400">Wszystkie</button>
+          <button onClick={() => setFilter('unread')} className="px-3 py-1 text-sm text-gray-600 hover:bg-blue-50 rounded-md disabled:text-gray-400">Nieprzeczytane</button>
         </div>
       </div>
 
@@ -176,8 +149,8 @@ export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(entry.category)}`}>
-                      {entry.category}
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${entry.category.color}`}>
+                      {entry.category.name}
                     </span>
                     {entry.title && (
                       <h3 className="font-semibold text-gray-900">{entry.title}</h3>

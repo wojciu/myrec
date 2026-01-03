@@ -27,25 +27,34 @@ model User {
 }
 
 model Department {
-  id              String   @id @default(uuid())
+  id              String         @id @default(uuid())
   name            String
   users           User[]
-  visibleEntries  Entry[]  @relation("VisibleToEntries")
-  assignedTasks   Task[]   @relation("DepartmentTasks")
-  createdAt       DateTime @default(now())
+  visibleEntries  Entry[]        @relation("VisibleToEntries")
+  assignedTasks   Task[]         @relation("DepartmentTasks")
+  createdAt       DateTime       @default(now())
+}
+
+model EntryCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  color     String   @default("bg-gray-100 text-gray-800")
+  entries   Entry[]
+  createdAt DateTime @default(now())
 }
 
 model Entry {
-  id                   String       @id @default(uuid())
+  id                   String         @id @default(uuid())
   authorId             String
-  author               User         @relation("AuthorEntries", fields: [authorId], references: [id])
+  author               User           @relation("AuthorEntries", fields: [authorId], references: [id])
   title                String?
   body                 String
-  category             String
-  visibleToDepartments Department[] @relation("VisibleToEntries")
+  categoryId           String
+  category             EntryCategory  @relation(fields: [categoryId], references: [id])
+  visibleToDepartments Department[]   @relation("VisibleToEntries")
   readBy               EntryReadBy[]
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
   tasks                Task[]
   attachments          Attachment[]
 }

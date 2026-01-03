@@ -20,6 +20,13 @@ export async function GET(
             email: true,
           },
         },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
         visibleToDepartments: {
           select: {
             id: true,
@@ -94,12 +101,24 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { title, body: entryBody, category, visibleToDepartmentIds } = body;
+    const { title, body: entryBody, categoryId, category, visibleToDepartmentIds } = body;
 
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
     if (entryBody !== undefined) updateData.body = entryBody;
-    if (category !== undefined) updateData.category = category;
+
+    // Support both categoryId (new) and category (legacy)
+    if (categoryId !== undefined) {
+      updateData.categoryId = categoryId;
+    } else if (category !== undefined) {
+      // Legacy support - find categoryId by name
+      const categoryRecord = await prisma.entryCategory.findUnique({
+        where: { name: category },
+      });
+      if (categoryRecord) {
+        updateData.categoryId = categoryRecord.id;
+      }
+    }
 
     if (visibleToDepartmentIds !== undefined) {
       updateData.visibleToDepartments = {
@@ -117,6 +136,13 @@ export async function PATCH(
             id: true,
             displayName: true,
             email: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
           },
         },
         visibleToDepartments: {

@@ -4,14 +4,6 @@ import { useDashboardStore } from '@/store/dashboard';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  info: 'bg-blue-100 text-blue-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  incident: 'bg-red-100 text-red-800',
-  guest: 'bg-purple-100 text-purple-800',
-  staff: 'bg-green-100 text-green-800',
-};
-
 const AVATAR_COLORS = [
   'bg-blue-500',
   'bg-green-500',
@@ -108,8 +100,8 @@ export function RecentEntries({ onViewEntry }: RecentEntriesProps) {
             >
               {/* Category & Title Row */}
               <div className="flex items-start gap-2 mb-2">
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${CATEGORY_COLORS[entry.category] || 'bg-gray-100 text-gray-800'}`}>
-                  {entry.category}
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${entry.category?.color || 'bg-gray-100 text-gray-800'}`}>
+                  {entry.category?.name || 'Bez kategorii'}
                 </span>
                 {entry.title && (
                   <h3 className="font-medium text-gray-900 flex-1">{entry.title}</h3>

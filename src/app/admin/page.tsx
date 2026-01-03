@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useAdminStore } from '@/store/admin';
 import { useRouter } from 'next/navigation';
@@ -9,17 +9,22 @@ import { UsersList } from '@/components/admin/UsersList';
 import { UserForm } from '@/components/admin/UserForm';
 import { DepartmentsList } from '@/components/admin/DepartmentsList';
 import { DepartmentForm } from '@/components/admin/DepartmentForm';
+import { CategoriesList, CategoriesListRef } from '@/components/admin/CategoriesList';
+import { CategoryForm } from '@/components/admin/CategoryForm';
 
 export default function AdminPage() {
   const { user, isAuthenticated, hasHydrated } = useAuthStore();
   const { departments, fetchDepartments } = useAdminStore();
   const router = useRouter();
-  const [tab, setTab] = useState<'users' | 'departments'>('users');
+  const [tab, setTab] = useState<'users' | 'departments' | 'categories'>('users');
   const [showUserForm, setShowUserForm] = useState(false);
   const [showDeptForm, setShowDeptForm] = useState(false);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [editingDept, setEditingDept] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
   const [formKey, setFormKey] = useState(0);
+  const categoriesListRef = useRef<CategoriesListRef>(null);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -72,6 +77,24 @@ export default function AdminPage() {
     setEditingDept(null);
   };
 
+  const handleNewCategory = () => {
+    setEditingCategory(null);
+    setShowCategoryForm(true);
+    setFormKey((prev) => prev + 1);
+  };
+
+  const handleEditCategory = (category: any) => {
+    setEditingCategory(category);
+    setShowCategoryForm(true);
+    setFormKey((prev) => prev + 1);
+  };
+
+  const handleCategoryFormSuccess = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+    categoriesListRef.current?.refresh();
+  };
+
   if (!hasHydrated) {
     return null;
   }
@@ -117,6 +140,16 @@ export default function AdminPage() {
             >
               Działy
             </button>
+            <button
+              onClick={() => setTab('categories')}
+              className={`px-4 py-2 font-medium ${
+                tab === 'categories'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Kategorie wpisów
+            </button>
           </div>
         </div>
 
@@ -137,10 +170,19 @@ export default function AdminPage() {
               + Nowy dział
             </button>
           )}
+          {tab === 'categories' && (
+            <button
+              onClick={handleNewCategory}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              + Nowa kategoria
+            </button>
+          )}
         </div>
 
         {tab === 'users' && <UsersList onEdit={handleEditUser} />}
         {tab === 'departments' && <DepartmentsList onEdit={handleEditDept} />}
+        {tab === 'categories' && <CategoriesList ref={categoriesListRef} onEdit={handleEditCategory} />}
 
         {showUserForm && (
           <UserForm
@@ -158,6 +200,15 @@ export default function AdminPage() {
             department={editingDept}
             onClose={() => setShowDeptForm(false)}
             onSuccess={handleDeptFormSuccess}
+          />
+        )}
+
+        {showCategoryForm && (
+          <CategoryForm
+            key={`category-${formKey}`}
+            category={editingCategory}
+            onClose={() => setShowCategoryForm(false)}
+            onSuccess={handleCategoryFormSuccess}
           />
         )}
       </main>

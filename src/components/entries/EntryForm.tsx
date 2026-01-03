@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useEntriesStore } from '@/store/entries';
 import { useAuthStore } from '@/store/auth';
+import { api } from '@/lib/api-client';
 
 interface EntryFormProps {
   entry: any;
@@ -10,23 +11,52 @@ interface EntryFormProps {
   onSuccess: () => void;
 }
 
-const CATEGORIES = ['info', 'warning', 'incident', 'guest', 'staff'] as const;
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
 
 export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
   const { createEntry, updateEntry } = useEntriesStore();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [category, setCategory] = useState<string>('info');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const isEditing = !!entry;
 
   useEffect(() => {
+    // Fetch categories
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/api/admin/categories');
+        setCategories(response.categories || []);
+        if (!isEditing && response.categories?.length > 0) {
+          setCategoryId(response.categories[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, [isEditing]);
+
+  useEffect(() => {
     if (entry) {
       setTitle(entry.title || '');
       setBody(entry.body || '');
-      setCategory(entry.category || 'info');
+      // Support both new categoryId and legacy category object
+      if (entry.categoryId) {
+        setCategoryId(entry.categoryId);
+      } else if (entry.category?.id) {
+        setCategoryId(entry.category.id);
+      }
     }
   }, [entry]);
 
@@ -37,13 +67,18 @@ export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
       return;
     }
 
+    if (!categoryId) {
+      setError('Kategoria jest wymagana');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const data: any = {
         body: body.trim(),
-        category,
+        categoryId,
       };
 
       if (title.trim()) {
@@ -68,7 +103,7 @@ export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
   const handleClose = () => {
     setTitle('');
     setBody('');
-    setCategory('info');
+    setCategoryId('');
     setError('');
     onClose();
   };
@@ -109,18 +144,23 @@ export function EntryForm({ entry, onClose, onSuccess }: EntryFormProps) {
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
                 Kategoria
               </label>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </option>
-                ))}
-              </select>
+              {loadingCategories ? (
+                <div className="text-sm text-gray-500">Ładowanie kategorii...</div>
+              ) : (
+                <select
+                  id="category"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                >
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>

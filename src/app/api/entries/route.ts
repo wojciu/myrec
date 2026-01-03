@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
     const authorId = searchParams.get('authorId');
     const category = searchParams.get('category');
+    const categoryId = searchParams.get('categoryId');
 
     const where: any = {};
 
@@ -19,8 +20,13 @@ export async function GET(req: NextRequest) {
       where.authorId = authorId;
     }
 
-    if (category) {
-      where.category = category;
+    if (categoryId) {
+      where.categoryId = categoryId;
+    } else if (category) {
+      // Legacy support - filter by category name
+      where.category = {
+        name: category,
+      };
     }
 
     // Filter by visible departments - user can see entries visible to their department
@@ -56,6 +62,13 @@ export async function GET(req: NextRequest) {
               id: true,
               displayName: true,
               email: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
             },
           },
           visibleToDepartments: {
@@ -110,11 +123,36 @@ export async function POST(req: NextRequest) {
     const authUser = await requireAuth(req);
     const body = await req.json();
 
-    const { title, body: entryBody, category, visibleToDepartmentIds } = body;
+    const { title, body: entryBody, categoryId, category, visibleToDepartmentIds } = body;
 
-    if (!entryBody || !category) {
+    if (!entryBody) {
       return NextResponse.json(
-        { error: 'body and category are required' },
+        { error: 'body is required' },
+        { status: 400 }
+      );
+    }
+
+    // Support both categoryId (new) and category (legacy)
+    let finalCategoryId = categoryId;
+
+    // If legacy category name is provided, find the categoryId
+    if (!finalCategoryId && category) {
+      const categoryRecord = await prisma.entryCategory.findUnique({
+        where: { name: category },
+      });
+      if (categoryRecord) {
+        finalCategoryId = categoryRecord.id;
+      } else {
+        return NextResponse.json(
+          { error: 'Category not found' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!finalCategoryId) {
+      return NextResponse.json(
+        { error: 'categoryId is required' },
         { status: 400 }
       );
     }
@@ -124,7 +162,7 @@ export async function POST(req: NextRequest) {
         authorId: authUser.userId,
         title,
         body: entryBody,
-        category,
+        categoryId: finalCategoryId,
         visibleToDepartments: visibleToDepartmentIds?.length
           ? {
               connect: visibleToDepartmentIds.map((id: string) => ({ id })),
@@ -143,6 +181,13 @@ export async function POST(req: NextRequest) {
             id: true,
             displayName: true,
             email: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
           },
         },
         visibleToDepartments: {

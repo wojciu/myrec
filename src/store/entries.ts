@@ -6,7 +6,12 @@ interface Entry {
   authorId: string;
   title: string | null;
   body: string;
-  category: string;
+  categoryId: string;
+  category: {
+    id: string;
+    name: string;
+    color: string;
+  };
   createdAt: string;
   updatedAt: string;
   author?: {
@@ -38,13 +43,13 @@ interface EntriesState {
   createEntry: (data: {
     title?: string;
     body: string;
-    category: string;
+    categoryId: string;
     visibleToDepartmentIds?: string[];
   }) => Promise<void>;
   updateEntry: (id: string, data: {
     title?: string;
     body?: string;
-    category?: string;
+    categoryId?: string;
     visibleToDepartmentIds?: string[];
   }) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
