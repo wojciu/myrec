@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 interface TaskListProps {
   onEdit: (task: any) => void;
+  initialStatus?: string | null;
 }
 
 const STATUSES = [
@@ -21,12 +22,19 @@ const PRIORITY_COLORS: Record<number, string> = {
   3: 'text-green-600 bg-green-50 border-green-200',
 };
 
-export function TaskList({ onEdit }: TaskListProps) {
+export function TaskList({ onEdit, initialStatus }: TaskListProps) {
   const { tasks, loading, error, fetchTasks, deleteTask, updateTask } = useTasksStore();
   const { user } = useAuthStore();
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<string>(initialStatus || 'all');
   const [deleting, setDeleting] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // Update filter when initialStatus changes
+  useEffect(() => {
+    if (initialStatus) {
+      setFilter(initialStatus);
+    }
+  }, [initialStatus]);
 
   useEffect(() => {
     fetchTasks();
@@ -34,6 +42,12 @@ export function TaskList({ onEdit }: TaskListProps) {
 
   const filteredTasks = tasks.filter((task) => {
     if (filter === 'all') return true;
+    if (filter === 'overdue') {
+      // Show tasks that are overdue (dueAt is in the past and not done)
+      if (task.status === 'done' || task.status === 'cancelled') return false;
+      if (!task.dueAt) return false;
+      return new Date(task.dueAt) < new Date();
+    }
     return task.status === filter;
   });
 
@@ -135,6 +149,7 @@ export function TaskList({ onEdit }: TaskListProps) {
                 {s.label}
               </option>
             ))}
+            <option value="overdue">Po terminie</option>
           </select>
         </div>
       </div>

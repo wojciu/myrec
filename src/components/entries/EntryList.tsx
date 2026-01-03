@@ -7,17 +7,27 @@ import { useEffect, useState } from 'react';
 interface EntryListProps {
   onEdit: (entry: any) => void;
   onView: (entryId: string) => void;
+  initialFilter?: string | null;
 }
 
 const CATEGORIES = ['info', 'warning', 'incident', 'guest', 'staff'] as const;
 
 type FilterType = 'all' | 'unread' | 'info' | 'warning' | 'incident' | 'guest' | 'staff';
 
-export function EntryList({ onEdit, onView }: EntryListProps) {
+export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
   const { entries, loading, error, fetchEntries, deleteEntry } = useEntriesStore();
   const { user } = useAuthStore();
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>(
+    (initialFilter as FilterType) || 'all'
+  );
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  // Update filter when initialFilter changes
+  useEffect(() => {
+    if (initialFilter) {
+      setFilter(initialFilter as FilterType);
+    }
+  }, [initialFilter]);
 
   useEffect(() => {
     fetchEntries();

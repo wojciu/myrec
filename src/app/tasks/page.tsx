@@ -16,6 +16,7 @@ function TasksContent() {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const [formKey, setFormKey] = useState(0);
+  const [initialStatus, setInitialStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -24,6 +25,17 @@ function TasksContent() {
       router.push('/login');
     }
   }, [isAuthenticated, hasHydrated, router]);
+
+  // Handle ?status= and ?filter= query params to set initial filter
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const filter = searchParams.get('filter');
+    if (status) {
+      setInitialStatus(status);
+    } else if (filter === 'overdue') {
+      setInitialStatus('overdue');
+    }
+  }, [searchParams]);
 
   // Handle ?id= query param to open specific task
   useEffect(() => {
@@ -86,7 +98,7 @@ function TasksContent() {
           </button>
         </div>
 
-        <TaskList onEdit={handleEditTask} />
+        <TaskList onEdit={handleEditTask} initialStatus={initialStatus} />
 
         {showForm && (
           <TaskForm

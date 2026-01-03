@@ -112,6 +112,7 @@ export default function DashboardPage() {
           {/* LEFT COLUMN - ENTRIES (2/5 width) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Unread Entries Stat Card */}
+              <p className="text-lg font-semibold text-black">Wpisy</p>
 
             <div
               onClick={() => router.push('/entries?filter=unread')}

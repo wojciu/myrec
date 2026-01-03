@@ -19,6 +19,7 @@ function EntriesContent() {
   const [editingEntry, setEditingEntry] = useState<any>(null);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
+  const [initialFilter, setInitialFilter] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -27,6 +28,14 @@ function EntriesContent() {
       router.push('/login');
     }
   }, [isAuthenticated, hasHydrated, router]);
+
+  // Handle ?filter= query param to set initial filter
+  useEffect(() => {
+    const filter = searchParams.get('filter');
+    if (filter) {
+      setInitialFilter(filter);
+    }
+  }, [searchParams]);
 
   // Handle ?id= query param to open specific entry (now opens detail, not edit)
   useEffect(() => {
@@ -90,7 +99,7 @@ function EntriesContent() {
           </button>
         </div>
 
-        <EntryList onEdit={handleEditEntry} onView={handleViewEntry} />
+        <EntryList onEdit={handleEditEntry} onView={handleViewEntry} initialFilter={initialFilter} />
 
         {showForm && (
           <EntryForm
