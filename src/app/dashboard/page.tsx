@@ -10,6 +10,8 @@ import { StatsCard } from '@/components/dashboard/StatsCard';
 import { RecentEntries } from '@/components/dashboard/RecentEntries';
 import { UrgentTasks } from '@/components/dashboard/UrgentTasks';
 import { EntryDetail } from '@/components/entries/EntryDetail';
+import { usePollingRefresh } from '@/hooks/usePollingRefresh';
+import { api } from '@/lib/api-client';
 
 export default function DashboardPage() {
   const { isAuthenticated, hasHydrated } = useAuthStore();
@@ -34,6 +36,20 @@ export default function DashboardPage() {
       fetchStats();
     }
   }, [isAuthenticated, hasHydrated]);
+
+  // Polling for new entries
+  usePollingRefresh({
+    fetchData: async () => {
+      const data = await api.get<{ entries: any[] }>('/api/entries?limit=10');
+      return data;
+    },
+    extractComparable: (data) => data.entries?.length || 0,
+    onNewData: () => {
+      fetchStats();
+    },
+    enabled: hasHydrated && isAuthenticated,
+    toastMessage: 'Nowe wpisy pojawiły się na dashboardzie',
+  });
 
   const handleRefresh = async () => {
     setRefreshing(true);

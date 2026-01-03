@@ -130,6 +130,12 @@ export async function POST(req: NextRequest) {
               connect: visibleToDepartmentIds.map((id: string) => ({ id })),
             }
           : undefined,
+        // Mark the entry as read by the author immediately
+        readBy: {
+          create: {
+            userId: authUser.userId,
+          },
+        },
       },
       include: {
         author: {
