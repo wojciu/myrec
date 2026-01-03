@@ -57,13 +57,21 @@ export const updateTaskSchema = z.object({
   reminderAt: z.string().datetime().optional(),
 });
 
+// Helper schema for nullable department ID with empty string handling
+const departmentIdSchema = z
+  .union([z.string(), z.null(), z.undefined()])
+  .transform(val => val === '' ? null : val)
+  .pipe(
+    z.union([z.string().uuid(), z.null(), z.undefined()])
+  );
+
 // User validators (admin)
 export const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   displayName: z.string().min(2, 'Display name must be at least 2 characters'),
   role: z.string().default('receptionist'),
-  departmentId: z.string().uuid().optional(),
+  departmentId: departmentIdSchema,
 });
 
 export const updateUserSchema = z.object({
@@ -71,7 +79,7 @@ export const updateUserSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters').optional(),
   displayName: z.string().min(2, 'Display name must be at least 2 characters').optional(),
   role: z.string().optional(),
-  departmentId: z.string().uuid().optional().nullable(),
+  departmentId: departmentIdSchema,
 });
 
 // Department validators (admin)

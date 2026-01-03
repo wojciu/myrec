@@ -94,7 +94,7 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-gray-900">
               {isEditing ? 'Edytuj użytkownika' : 'Nowy użytkownik'}
             </h2>
             <button

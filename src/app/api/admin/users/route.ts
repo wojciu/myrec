@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { hashPassword } from '@/lib/auth';
-import { registerSchema, updateUserSchema } from '@/lib/validators';
+import { createUserSchema, updateUserSchema } from '@/lib/validators';
 
 export async function GET(req: NextRequest) {
   try {
@@ -80,8 +80,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
+    console.log('POST /api/admin/users body:', JSON.stringify(body, null, 2));
+
     // Validate input
-    const validatedData = registerSchema.parse(body);
+    const validatedData = createUserSchema.parse(body);
 
     // Check if email already exists
     const existing = await prisma.user.findUnique({
