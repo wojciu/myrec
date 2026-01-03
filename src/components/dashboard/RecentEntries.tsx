@@ -81,67 +81,74 @@ export function RecentEntries({ onViewEntry }: RecentEntriesProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Ostatnie wpisy</h2>
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-white">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📖</span>
+          <h2 className="text-base font-semibold text-gray-900">Ostatnie wpisy</h2>
+        </div>
         <button
           onClick={() => router.push('/entries')}
-          className="text-sm text-blue-600 hover:text-blue-700"
+          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
         >
-          Zobacz wszystkie →
+          Wszystkie →
         </button>
       </div>
       {entries.length === 0 ? (
-        <div className="p-6 text-center text-gray-500">Brak wpisów</div>
+        <div className="p-8 text-center text-gray-500">
+          <div className="text-3xl mb-2">📝</div>
+          Brak wpisów
+        </div>
       ) : (
         <div className="divide-y divide-gray-100">
           {entries.map((entry: any) => (
             <div
               key={entry.id}
               onClick={() => handleEntryClick(entry.id)}
-              className={`p-4 hover:bg-gray-50 cursor-pointer group border-l ${getEntryBorderClass(entry)}`}
+              className={`p-4 hover:bg-indigo-50/50 cursor-pointer transition-colors border-l-4 ${getEntryBorderClass(entry)}`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${CATEGORY_COLORS[entry.category] || 'bg-gray-100 text-gray-800'}`}>
-                      {entry.category}
-                    </span>
-                    {entry.title && (
-                      <h3 className="font-medium text-gray-900">{entry.title}</h3>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 line-clamp-2">{entry.body}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <p className="text-xs text-gray-400">
-                      {entry.author?.displayName || entry.author?.email} • {new Date(entry.createdAt).toLocaleString('pl-PL')}
-                    </p>
-                    {entry.readBy && entry.readBy.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-500">Przeczytano:</span>
-                        <div className="flex -space-x-1">
-                          {entry.readBy.slice(0, 4).map((readBy: any) => (
-                            <div
-                              key={readBy.id}
-                              className={`w-6 h-6 rounded-full ${getAvatarColor(readBy.user.displayName)} text-white text-xs flex items-center justify-center font-medium border-1 border-white`}
-                              title={`${readBy.user.displayName} - ${new Date(readBy.readAt).toLocaleString('pl-PL')}`}
-                            >
-                              {getInitials(readBy.user.displayName)}
-                            </div>
-                          ))}
-                          {entry.readBy.length > 4 && (
-                            <div className="w-5 h-5 rounded-full bg-gray-400 text-white text-xs flex items-center justify-center font-medium border-2 border-white">
-                              +{entry.readBy.length - 4}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-500">({entry.readBy.length})</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <span className="text-gray-300 group-hover:text-blue-600 transition-colors">
-                  →
+              {/* Category & Title Row */}
+              <div className="flex items-start gap-2 mb-2">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${CATEGORY_COLORS[entry.category] || 'bg-gray-100 text-gray-800'}`}>
+                  {entry.category}
                 </span>
+                {entry.title && (
+                  <h3 className="font-medium text-gray-900 flex-1">{entry.title}</h3>
+                )}
+              </div>
+
+              {/* Body - more space for reading */}
+              <p className="text-sm text-gray-700 mb-3 leading-relaxed">{entry.body}</p>
+
+              {/* Footer: author, time, read status */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="font-medium">{entry.author?.displayName || entry.author?.email}</span>
+                  <span>•</span>
+                  <span>{new Date(entry.createdAt).toLocaleString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+
+                {/* Read count with avatars */}
+                {entry.readBy && entry.readBy.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-1.5">
+                      {entry.readBy.slice(0, 3).map((readBy: any) => (
+                        <div
+                          key={readBy.id}
+                          className={`w-6 h-6 rounded-full ${getAvatarColor(readBy.user.displayName)} text-white text-xs flex items-center justify-center font-medium border-2 border-white`}
+                          title={`${readBy.user.displayName}`}
+                        >
+                          {getInitials(readBy.user.displayName)}
+                        </div>
+                      ))}
+                      {entry.readBy.length > 3 && (
+                        <div className="w-6 h-6 rounded-full bg-gray-300 text-gray-700 text-xs flex items-center justify-center font-medium border-2 border-white">
+                          +{entry.readBy.length - 3}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500">{entry.readBy.length} przeczytano</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}

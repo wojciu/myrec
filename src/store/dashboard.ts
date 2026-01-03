@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api-client';
+import { useAuthStore } from '@/store/auth';
 
 interface DashboardStats {
   openTasksCount: number;
   inProgressTasksCount: number;
   overdueTasksCount: number;
   todayEntriesCount: number;
+  unreadEntriesCount: number;
   recentEntries: any[];
   urgentTasks: any[];
 }
@@ -26,12 +28,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const [entriesData, tasksData] = await Promise.all([
-        api.get<{ entries: any[] }>('/api/entries?limit=10'),
+        api.get<{ entries: any[] }>('/api/entries?limit=50'),
         api.get<{ tasks: any[] }>('/api/tasks?limit=50'),
       ]);
 
       const tasks = tasksData.tasks || [];
       const entries = entriesData.entries || [];
+      const user = useAuthStore.getState().user;
 
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -42,6 +45,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         t.dueAt && new Date(t.dueAt) < now && t.status !== 'done' && t.status !== 'cancelled'
       ).length;
       const todayEntriesCount = entries.filter((e: any) => e.createdAt >= today).length;
+
+      // Count unread entries (entries not read by current user)
+      const unreadEntriesCount = entries.filter((e: any) => {
+        if (!user) return true;
+        return !e.readBy?.some((r: any) => r.userId === user.id);
+      }).length;
 
       const urgentTasks = tasks
         .filter((t: any) =>
@@ -58,6 +67,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           inProgressTasksCount,
           overdueTasksCount,
           todayEntriesCount,
+          unreadEntriesCount,
           recentEntries,
           urgentTasks,
         },

@@ -1,6 +1,3 @@
-// PROPOZYCJA - nie wprowadzam, tylko do pokazania
-// To jest alternatywna wersja UrgentTasks.tsx z quick actions
-
 'use client';
 
 import { useState } from 'react';
@@ -9,9 +6,16 @@ import { useTasksStore } from '@/store/tasks';
 import { useRouter } from 'next/navigation';
 
 const PRIORITY_COLORS: Record<number, string> = {
-  1: 'text-red-600 bg-red-50 border-red-200',
-  2: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-  3: 'text-green-600 bg-green-50 border-green-200',
+  1: 'text-red-700 bg-red-100 border-red-300',
+  2: 'text-amber-700 bg-amber-100 border-amber-300',
+  3: 'text-green-700 bg-green-100 border-green-300',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  open: 'bg-slate-100 text-slate-700',
+  in_progress: 'bg-blue-100 text-blue-700',
+  done: 'bg-green-100 text-green-700',
+  cancelled: 'bg-gray-100 text-gray-500',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -31,7 +35,7 @@ export function UrgentTasks() {
     setUpdating(taskId);
     try {
       await updateTask(taskId, { status: newStatus });
-      await fetchStats(); // odśwież stats żeby zniknęło z listy
+      await fetchStats();
     } catch (err) {
       console.error('Status update error:', err);
     } finally {
@@ -60,17 +64,20 @@ export function UrgentTasks() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Priorytetowe zadania</h2>
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-amber-50 to-white">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⚡</span>
+          <h2 className="text-base font-semibold text-gray-900">Priorytetowe zadania</h2>
+        </div>
         <button
           onClick={() => router.push('/tasks')}
-          className="text-sm text-blue-600 hover:text-blue-700"
+          className="text-sm text-amber-600 hover:text-amber-700 font-medium"
         >
           Wszystkie →
         </button>
       </div>
       {tasks.length === 0 ? (
-        <div className="p-6 text-center text-gray-500">
+        <div className="p-8 text-center text-gray-500">
           <div className="text-3xl mb-2">🎉</div>
           Brak pilnych zadań
         </div>
@@ -82,26 +89,28 @@ export function UrgentTasks() {
             return (
               <div
                 key={task.id}
-                className={`p-4 ${overdue ? 'bg-red-50' : ''}`}
+                className={`p-3 transition-colors ${overdue ? 'bg-red-50/80' : 'hover:bg-amber-50/30'}`}
               >
-                {/* Nagłówek z priorytetem i akcjami */}
-                <div className="flex items-start justify-between gap-3 mb-2">
+                {/* Header with priority, title, and actions */}
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    {/* Priorytet + tytuł w jednej linii */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium border ${PRIORITY_COLORS[task.priority]}`}>
-                        {task.priority === 1 ? '!' : task.priority === 2 ? '!!' : '•'}
+                    {/* Priority badge + title */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-xs font-bold border flex-shrink-0 ${PRIORITY_COLORS[task.priority]}`}
+                      >
+                        {task.priority === 1 ? '🔴' : task.priority === 2 ? '🟡' : '🟢'}
                       </span>
-                      <h3 className="font-medium text-gray-900 truncate">{task.title}</h3>
+                      <h3 className="font-medium text-gray-900 text-sm">{task.title}</h3>
                     </div>
 
-                    {/* Status + termin */}
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                    {/* Status, due date, assignee */}
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`px-2 py-0.5 rounded font-medium ${STATUS_COLORS[task.status]}`}>
                         {STATUS_LABELS[task.status]}
                       </span>
                       {task.dueAt && (
-                        <span className={overdue ? 'text-red-600 font-medium' : ''}>
+                        <span className={overdue ? 'text-red-600 font-semibold' : 'text-gray-500'}>
                           {overdue && '⚠️ '}
                           {new Date(task.dueAt).toLocaleDateString('pl-PL', {
                             day: 'numeric',
@@ -112,28 +121,27 @@ export function UrgentTasks() {
                         </span>
                       )}
                       {task.assignee && (
-                        <span>👤 {task.assignee.displayName || task.assignee.email}</span>
+                        <span className="text-gray-500">
+                          👤 {task.assignee.displayName || task.assignee.email}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Quick actions - głównej różnica vs wpisy */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  {/* Quick actions - MAIN DIFFERENCE vs entries */}
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
                     {task.status === 'open' && (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStart(task.id);
-                          }}
-                          disabled={updating === task.id}
-                          className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-                          title="Oznacz jako w trakcie"
-                        >
-                          {updating === task.id ? '...' : '▶ Start'}
-                        </button>
-                        
-                      </>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStart(task.id);
+                        }}
+                        disabled={updating === task.id}
+                        className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+                        title="Oznacz jako w trakcie"
+                      >
+                        {updating === task.id ? '...' : '▶ Start'}
+                      </button>
                     )}
                     {task.status === 'in_progress' && (
                       <button
@@ -142,7 +150,7 @@ export function UrgentTasks() {
                           handleMarkDone(task.id);
                         }}
                         disabled={updating === task.id}
-                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+                        className="px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:bg-gray-400 transition-colors"
                         title="Oznacz jako zrobione"
                       >
                         {updating === task.id ? '...' : '✓ Zrobione'}
@@ -150,7 +158,7 @@ export function UrgentTasks() {
                     )}
                     <button
                       onClick={() => router.push(`/tasks?id=${task.id}`)}
-                      className="px-3 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                      className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                       title="Szczegóły"
                     >
                       …
@@ -158,9 +166,9 @@ export function UrgentTasks() {
                   </div>
                 </div>
 
-                {/* Description - opcjonalnie */}
+                {/* Description - compact */}
                 {task.description && (
-                  <p className="text-sm text-gray-600 line-clamp-1 ml-1">
+                  <p className="text-sm text-gray-600 mt-1.5 ml-1 line-clamp-1">
                     {task.description}
                   </p>
                 )}
@@ -172,23 +180,3 @@ export function UrgentTasks() {
     </div>
   );
 }
-
-/* GŁÓWNE RÓŻNICE VS WPISY:
-
-1. QUICK ACTIONS - widoczne od razu przyciski akcji:
-   - "Start" / "Zrobione" bez wchodzenia w szczegóły
-   - Wpisy nie mają quick actions (bo służą czytaniu)
-
-2. PRIORYTET WIZUALNY:
-   - Priorytet jako badge z ikoną (! / !! / •)
-   - Overdue = czerwone tło + ⚠️
-
-3. KOMPATKOWIEJSZY LAYOUT:
-   - Mniej miejsca na description (line-clamp-1)
-   - Więcej na akcje
-
-4. MENTAL MODEL:
-   - Wpis: kliknij → czytaj → zamknij
-   - Zadanie: zobacz → zrób (quick action) LUB kliknij → szczegóły
-
-*/
