@@ -12,18 +12,19 @@ datasource db {
 }
 
 model User {
-  id             String       @id @default(uuid())
-  email          String       @unique
+  id             String         @id @default(uuid())
+  email          String         @unique
   passwordHash   String
   displayName    String
-  role           String       @default("receptionist")
+  role           String         @default("receptionist")
   departmentId   String?
-  department     Department?  @relation(fields: [departmentId], references: [id])
-  createdEntries Entry[]      @relation("AuthorEntries")
-  readEntries    EntryReadBy[] @relation("UserReadEntries")
-  assignedTasks  Task[]       @relation("AssigneeTasks")
-  createdTasks   Task[]       @relation("CreatorTasks")
-  createdAt      DateTime     @default(now())
+  department     Department?    @relation(fields: [departmentId], references: [id])
+  createdEntries Entry[]        @relation("AuthorEntries")
+  readEntries    EntryReadBy[]  @relation("UserReadEntries")
+  assignedTasks  Task[]         @relation("AssigneeTasks")
+  createdTasks   Task[]         @relation("CreatorTasks")
+  notifications  Notification[]  @relation("UserNotifications")
+  createdAt      DateTime       @default(now())
 }
 
 model Department {
@@ -57,6 +58,7 @@ model Entry {
   updatedAt            DateTime       @updatedAt
   tasks                Task[]
   attachments          Attachment[]
+  notifications        Notification[]
 }
 
 model EntryReadBy {
@@ -71,25 +73,26 @@ model EntryReadBy {
 }
 
 model Task {
-  id                   String      @id @default(uuid())
+  id                   String         @id @default(uuid())
   title                String
   description          String?
-  status               String      @default("open")
-  priority             Int         @default(2)
+  status               String         @default("open")
+  priority             Int            @default(2)
   createdById          String?
-  createdBy            User?       @relation("CreatorTasks", fields: [createdById], references: [id])
+  createdBy            User?          @relation("CreatorTasks", fields: [createdById], references: [id])
   assigneeId           String?
-  assignee             User?       @relation("AssigneeTasks", fields: [assigneeId], references: [id])
+  assignee             User?          @relation("AssigneeTasks", fields: [assigneeId], references: [id])
   assigneeDepartmentId String?
-  assigneeDepartment   Department? @relation("DepartmentTasks", fields: [assigneeDepartmentId], references: [id])
+  assigneeDepartment   Department?    @relation("DepartmentTasks", fields: [assigneeDepartmentId], references: [id])
   entryId              String?
-  entry                Entry?      @relation(fields: [entryId], references: [id])
+  entry                Entry?         @relation(fields: [entryId], references: [id])
   dueAt                DateTime?
   reminderAt           DateTime?
   reminderSentAt       DateTime?
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
   attachments          Attachment[]
+  notifications        Notification[]
 }
 
 model Attachment {
@@ -102,4 +105,23 @@ model Attachment {
   fileName  String
   contentType String
   createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  entryId   String?
+  entry     Entry?   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  read      Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
 }

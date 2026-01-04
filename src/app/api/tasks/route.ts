@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { createTaskNotification } from '@/lib/notifications';
 
 export async function GET(req: NextRequest) {
   try {
@@ -233,6 +234,13 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Create notification for assigned users
+    if (assigneeId || assigneeDepartmentId) {
+      createTaskNotification(task.id, assigneeId, assigneeDepartmentId).catch((err) =>
+        console.error('Failed to create task notification:', err)
+      );
+    }
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {

@@ -2,6 +2,7 @@
 
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
+import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 
 interface HeaderProps {
   title?: string;
@@ -41,7 +42,8 @@ export function Header({ title, subtitle }: HeaderProps) {
             <h1 className="text-2xl font-bold text-gray-900">{title || 'Hotel Shift Journal'}</h1>
             {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <NotificationsDropdown />
             <span className="text-gray-600 text-sm">
               {user?.displayName} ({user?.role})
             </span>

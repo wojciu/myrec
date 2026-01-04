@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { createEntryNotification } from '@/lib/notifications';
 
 export async function GET(req: NextRequest) {
   try {
@@ -243,6 +244,14 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Create notification for users in departments that can see this entry
+    const departmentIds = visibleToDepartmentIds || [];
+    if (departmentIds.length > 0) {
+      createEntryNotification(entry.id, departmentIds).catch((err) =>
+        console.error('Failed to create entry notification:', err)
+      );
+    }
 
     return NextResponse.json(entry, { status: 201 });
   } catch (error) {

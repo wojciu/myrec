@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionExpiredModal } from "@/components/SessionExpiredModal";
 import { Toaster } from "sonner";
+import { NotificationProvider } from "@/components/notifications/NotificationProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionExpiredModal />
-        <Toaster position="top-right" richColors />
-        {children}
+        <NotificationProvider>
+          <SessionExpiredModal />
+          <Toaster position="top-right" richColors />
+          {children}
+        </NotificationProvider>
       </body>
     </html>
   );
