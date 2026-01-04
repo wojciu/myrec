@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { createTaskNotification } from '@/lib/notifications';
 import { logTaskCreated } from '@/lib/taskActivity';
+import { buildTaskVisibilityFilter } from '@/lib/taskVisibility';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,87 +21,20 @@ export async function GET(req: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    // Build visibility filter based on user role and assignments
-    let where: any;
+    // Build visibility filter using shared helper (single source of truth)
+    const additionalFilters: any = {};
 
-    if (authUser.role === 'admin') {
-      // Admin sees all tasks
-      where = {};
-    } else if (authUser.role === 'manager' && authUser.departmentId) {
-      // Manager sees all tasks from their department:
-      // 1. Tasks created by users from their department
-      // 2. Tasks assigned to users from their department
-      // 3. Tasks assigned to their department
-      where = {
-        OR: [
-          // Created by someone in the department
-          {
-            createdBy: {
-              departmentId: authUser.departmentId,
-            },
-          },
-          // Assigned to someone in the department
-          {
-            assignee: {
-              departmentId: authUser.departmentId,
-            },
-          },
-          // Assigned to the department itself
-          {
-            assigneeDepartmentId: authUser.departmentId,
-          },
-        ],
-      };
-    } else {
-      // Regular users see tasks based on visibility rules:
-      // 1. Tasks not assigned to anyone (visible to everyone)
-      // 2. Tasks assigned to user's department (no specific assignee)
-      // 3. Tasks assigned to the user specifically
-      // 4. Tasks created by the user
-      where = {
-        OR: [
-          // Rule 1: Unassigned tasks (no person, no department) - visible to everyone
-          {
-            AND: [
-              { assigneeId: null },
-              { assigneeDepartmentId: null },
-            ],
-          },
-          // Rule 2: Tasks assigned to user's department (but not to a specific person)
-          {
-            AND: [
-              { assigneeDepartmentId: authUser.departmentId },
-              { assigneeId: null },
-            ],
-          },
-          // Rule 3: Tasks assigned specifically to this user
-          { assigneeId: authUser.userId },
-          // Rule 4: Tasks created by the user
-          { createdById: authUser.userId },
-        ],
-      };
-    }
+    if (status) additionalFilters.status = status;
+    if (priority) additionalFilters.priority = parseInt(priority);
+    if (assigneeId) additionalFilters.assigneeId = assigneeId;
+    if (assigneeDepartmentId) additionalFilters.assigneeDepartmentId = assigneeDepartmentId;
+    if (createdById) additionalFilters.createdById = createdById;
 
-    // Apply additional filters
-    if (status) {
-      where.status = status;
-    }
-
-    if (priority) {
-      where.priority = parseInt(priority);
-    }
-
-    if (assigneeId) {
-      where.assigneeId = assigneeId;
-    }
-
-    if (assigneeDepartmentId) {
-      where.assigneeDepartmentId = assigneeDepartmentId;
-    }
-
-    if (createdById) {
-      where.createdById = createdById;
-    }
+    const where = buildTaskVisibilityFilter({
+      id: authUser.userId,
+      role: authUser.role,
+      departmentId: authUser.departmentId,
+    }, additionalFilters);
 
     // Build orderBy based on sortBy and sortOrder params
     const validSortFields = ['priority', 'createdAt', 'dueAt', 'status', 'updatedAt'];
