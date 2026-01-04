@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
+import { TaskDetail } from '@/components/tasks/TaskDetail';
 
 function TasksContent() {
   const { isAuthenticated, hasHydrated } = useAuthStore();
@@ -14,7 +15,9 @@ function TasksContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
+  const [viewingTaskId, setViewingTaskId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [initialStatus, setInitialStatus] = useState<string | null>(null);
 
@@ -37,27 +40,18 @@ function TasksContent() {
     }
   }, [searchParams]);
 
-  // Handle ?id= or ?task= query param to open specific task
+  // Handle ?id= or ?task= query param to open specific task detail
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated) return;
 
     const taskId = searchParams.get('id') || searchParams.get('task');
     if (taskId) {
-      const loadTask = async () => {
-        try {
-          const task = await fetchTask(taskId);
-          setEditingTask(task);
-          setShowForm(true);
-          setFormKey((prev) => prev + 1);
-          // Clear the URL param
-          router.replace('/tasks');
-        } catch (error) {
-          console.error('Failed to load task:', error);
-        }
-      };
-      loadTask();
+      setViewingTaskId(taskId);
+      setShowDetail(true);
+      // Clear the URL param
+      router.replace('/tasks');
     }
-  }, [hasHydrated, isAuthenticated, searchParams, fetchTask, router]);
+  }, [hasHydrated, isAuthenticated, searchParams, router]);
 
   const handleNewTask = () => {
     setEditingTask(null);
@@ -74,6 +68,23 @@ function TasksContent() {
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditingTask(null);
+  };
+
+  const handleDetailClose = () => {
+    setShowDetail(false);
+    setViewingTaskId(null);
+  };
+
+  const handleDetailEdit = () => {
+    // Fetch the task for editing
+    if (viewingTaskId) {
+      fetchTask(viewingTaskId).then((task) => {
+        setEditingTask(task);
+        setShowForm(true);
+        setShowDetail(false);
+        setViewingTaskId(null);
+      });
+    }
   };
 
   if (!hasHydrated) {
@@ -106,6 +117,14 @@ function TasksContent() {
             task={editingTask}
             onClose={() => setShowForm(false)}
             onSuccess={handleFormSuccess}
+          />
+        )}
+
+        {showDetail && viewingTaskId && (
+          <TaskDetail
+            taskId={viewingTaskId}
+            onClose={handleDetailClose}
+            onEdit={handleDetailEdit}
           />
         )}
       </main>

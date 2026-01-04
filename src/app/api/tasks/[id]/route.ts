@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { createTaskStatusNotification } from '@/lib/notifications';
 
 export async function GET(
   req: NextRequest,
@@ -154,6 +155,9 @@ export async function PATCH(
     if (dueAt !== undefined) updateData.dueAt = dueAt ? new Date(dueAt) : null;
     if (reminderAt !== undefined) updateData.reminderAt = reminderAt ? new Date(reminderAt) : null;
 
+    // Store previous status for notification
+    const previousStatus = existingTask.status;
+
     const task = await prisma.task.update({
       where: { id },
       data: updateData,
@@ -186,6 +190,17 @@ export async function PATCH(
         },
       },
     });
+
+    // Send notification to author if status changed
+    if (status && status !== previousStatus && task.createdById) {
+      createTaskStatusNotification(
+        task.id,
+        previousStatus,
+        status,
+        authUser.userId,
+        task.createdById
+      ).catch((err) => console.error('Failed to create status notification:', err));
+    }
 
     return NextResponse.json(task);
   } catch (error) {

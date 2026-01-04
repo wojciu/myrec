@@ -83,3 +83,48 @@ export async function createReminderNotification(taskId: string, assigneeId: str
     });
   }
 }
+
+export async function createTaskStatusNotification(
+  taskId: string,
+  previousStatus: string,
+  newStatus: string,
+  changedByUserId: string,
+  authorId: string
+) {
+  // Don't notify if:
+  // 1. The author changed their own task
+  // 2. Status changed to cancelled
+  if (changedByUserId === authorId || newStatus === 'cancelled') {
+    return;
+  }
+
+  // Fetch task to get title
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { title: true },
+  });
+
+  if (!task) return;
+
+  // Status labels in Polish
+  const statusLabels: Record<string, string> = {
+    open: 'Do zrobienia',
+    in_progress: 'W trakcie',
+    done: 'Zrobione',
+    cancelled: 'Anulowane',
+  };
+
+  const oldStatusLabel = statusLabels[previousStatus] || previousStatus;
+  const newStatusLabel = statusLabels[newStatus] || newStatus;
+
+  // Create notification for the author
+  await prisma.notification.create({
+    data: {
+      userId: authorId,
+      type: 'task_status_changed',
+      title: 'Status zadania zmieniony',
+      message: `Zadanie "${task.title}" zmieniło status z "${oldStatusLabel}" na "${newStatusLabel}"`,
+      taskId,
+    },
+  });
+}
