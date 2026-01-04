@@ -125,8 +125,8 @@ export function EntryDetail({ entryId, onClose, onEdit }: EntryDetailProps) {
           <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                  {entry.category}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${entry.category?.color || 'bg-gray-100 text-gray-800'}`}>
+                  {entry.category?.name}
                 </span>
                 {entry.visibleToDepartments.length > 0 && (
                   <span className="text-xs text-gray-500">
