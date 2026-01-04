@@ -130,7 +130,12 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">Nieprzeczytane wpisy dziennika</p>
-                  <p className="text-3xl font-bold text-indigo-900 mt-2">{stats?.unreadEntriesCount || 0}</p>
+                  <p className="text-3xl font-bold text-indigo-900 mt-2">
+                    {stats?.unreadEntriesCount || 0}
+                    <span className="text-lg font-normal text-indigo-700 ml-1">
+                      {stats?.todayEntriesCount ? `(dziś: ${stats?.todayEntriesCount})` : ''}
+                    </span>
+                  </p>
                 </div>
                 <div className="w-14 h-14 bg-indigo-200 rounded-xl flex items-center justify-center">
                   <span className="text-2xl">📖</span>
@@ -162,7 +167,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Zadania do zrobienia</p>
-                    <p className="text-2xl font-bold text-slate-900">{stats?.openTasksCount || 0}</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {stats?.openTasksCountMine || 0}
+                      <span className="text-sm font-normal text-slate-600 ml-1">
+                        ({stats?.openTasksCount || 0})
+                      </span>
+                    </p>
                   </div>
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
                     <span className="text-lg">📋</span>
@@ -177,7 +187,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-1">W trakcie</p>
-                    <p className="text-2xl font-bold text-amber-900">{stats?.inProgressTasksCount || 0}</p>
+                    <p className="text-2xl font-bold text-amber-900">
+                      {stats?.inProgressTasksCountMine || 0}
+                      <span className="text-sm font-normal text-amber-700 ml-1">
+                        ({stats?.inProgressTasksCount || 0})
+                      </span>
+                    </p>
                   </div>
                   <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center mb-2">
                     <span className="text-lg">⚙️</span>
@@ -192,7 +207,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-red-700 uppercase tracking-wide mb-1">Po terminie</p>
-                    <p className="text-2xl font-bold text-red-900">{stats?.overdueTasksCount || 0}</p>
+                    <p className="text-2xl font-bold text-red-900">
+                      {stats?.overdueTasksCountMine || 0}
+                      <span className="text-sm font-normal text-red-700 ml-1">
+                        ({stats?.overdueTasksCount || 0})
+                      </span>
+                    </p>
                   </div>
                   <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center mb-2">
                     <span className="text-lg">⚠️</span>

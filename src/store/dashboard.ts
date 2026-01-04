@@ -4,10 +4,14 @@ import { useAuthStore } from '@/store/auth';
 
 interface DashboardStats {
   openTasksCount: number;
+  openTasksCountMine: number;
   inProgressTasksCount: number;
+  inProgressTasksCountMine: number;
   overdueTasksCount: number;
+  overdueTasksCountMine: number;
   todayEntriesCount: number;
   unreadEntriesCount: number;
+  unreadEntriesCountTotal: number;
   recentEntries: any[];
   urgentTasks: any[];
 }
@@ -27,9 +31,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   fetchStats: async () => {
     set({ loading: true, error: null });
     try {
-      const [entriesData, tasksData] = await Promise.all([
+      const [entriesData, tasksData, dashboardStats] = await Promise.all([
         api.get<{ entries: any[] }>('/api/entries?limit=50'),
         api.get<{ tasks: any[] }>('/api/tasks?limit=50'),
+        api.get<{
+          openTasksCount: number;
+          openTasksCountMine: number;
+          inProgressTasksCount: number;
+          inProgressTasksCountMine: number;
+          overdueTasksCount: number;
+          overdueTasksCountMine: number;
+          unreadEntriesCountTotal: number;
+          todayEntriesCount: number;
+        }>('/api/dashboard/stats'),
       ]);
 
       const tasks = tasksData.tasks || [];
@@ -37,16 +51,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       const user = useAuthStore.getState().user;
 
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
-      const openTasksCount = tasks.filter((t: any) => t.status === 'open').length;
-      const inProgressTasksCount = tasks.filter((t: any) => t.status === 'in_progress').length;
-      const overdueTasksCount = tasks.filter((t: any) =>
-        t.dueAt && new Date(t.dueAt) < now && t.status !== 'done' && t.status !== 'cancelled'
-      ).length;
-      const todayEntriesCount = entries.filter((e: any) => e.createdAt >= today).length;
-
-      // Count unread entries (entries not read by current user)
+      // Unread entries for current user
       const unreadEntriesCount = entries.filter((e: any) => {
         if (!user) return true;
         return !e.readBy?.some((r: any) => r.userId === user.id);
@@ -57,17 +63,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           (t.status === 'open' || t.status === 'in_progress') &&
           (t.priority === 1 || (t.dueAt && new Date(t.dueAt) < new Date(now.getTime() + 24 * 60 * 60 * 1000)))
         )
-        .slice(0, 5);
+        .slice(0, 10);
 
       const recentEntries = entries.slice(0, 5);
 
       set({
         stats: {
-          openTasksCount,
-          inProgressTasksCount,
-          overdueTasksCount,
-          todayEntriesCount,
+          openTasksCount: dashboardStats.openTasksCount,
+          openTasksCountMine: dashboardStats.openTasksCountMine,
+          inProgressTasksCount: dashboardStats.inProgressTasksCount,
+          inProgressTasksCountMine: dashboardStats.inProgressTasksCountMine,
+          overdueTasksCount: dashboardStats.overdueTasksCount,
+          overdueTasksCountMine: dashboardStats.overdueTasksCountMine,
+          todayEntriesCount: dashboardStats.todayEntriesCount,
           unreadEntriesCount,
+          unreadEntriesCountTotal: dashboardStats.unreadEntriesCountTotal,
           recentEntries,
           urgentTasks,
         },
