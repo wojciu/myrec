@@ -30,6 +30,10 @@ export function Header({ title, subtitle }: HeaderProps) {
     router.push('/tasks');
   };
 
+    const handleTasksKanban = () => {
+    router.push('/kanban');
+  };
+
   const handleAdmin = () => {
     router.push('/admin');
   };
@@ -73,6 +77,12 @@ export function Header({ title, subtitle }: HeaderProps) {
             className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
           >
             Zadania
+          </button>
+           <button
+            onClick={handleTasksKanban}
+            className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            Kanban - Zadania
           </button>
           {user?.role === 'admin' && (
             <button
