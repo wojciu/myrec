@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { createTaskStatusNotification } from '@/lib/notifications';
+import {
+  logTaskOpened,
+  logStatusChanged,
+  logTaskUpdated,
+  logTaskAssigned,
+} from '@/lib/taskActivity';
 
 export async function GET(
   req: NextRequest,
@@ -70,6 +76,11 @@ export async function GET(
     if (!hasAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // Log that task was opened
+    logTaskOpened(id, authUser.userId).catch((err) =>
+      console.error('Failed to log activity:', err)
+    );
 
     return NextResponse.json(task);
   } catch (error) {
@@ -191,7 +202,14 @@ export async function PATCH(
       },
     });
 
-    // Send notification to author if status changed
+    // Log status change (always log, even if no notification sent)
+    if (status && status !== previousStatus) {
+      logStatusChanged(id, authUser.userId, previousStatus, status).catch((err) =>
+        console.error('Failed to log activity:', err)
+      );
+    }
+
+    // Send notification to author if status changed and task has author
     if (status && status !== previousStatus && task.createdById) {
       createTaskStatusNotification(
         task.id,
@@ -200,6 +218,30 @@ export async function PATCH(
         authUser.userId,
         task.createdById
       ).catch((err) => console.error('Failed to create status notification:', err));
+    }
+
+    // Log assignment change
+    const assigneeChanged =
+      (assigneeId !== undefined && assigneeId !== existingTask.assigneeId) ||
+      (assigneeDepartmentId !== undefined &&
+        assigneeDepartmentId !== existingTask.assigneeDepartmentId);
+
+    if (assigneeChanged) {
+      const previousAssignee = existingTask.assigneeId
+        ? existingTask.assigneeId
+        : existingTask.assigneeDepartmentId;
+      const newAssignee = assigneeId || assigneeDepartmentId;
+
+      logTaskAssigned(id, authUser.userId, previousAssignee || null, newAssignee || null).catch(
+        (err) => console.error('Failed to log activity:', err)
+      );
+    }
+
+    // Log task update if not status or assignment change
+    if (!assigneeChanged && (!status || status === previousStatus)) {
+      logTaskUpdated(id, authUser.userId).catch((err) =>
+        console.error('Failed to log activity:', err)
+      );
     }
 
     return NextResponse.json(task);

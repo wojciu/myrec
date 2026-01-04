@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { createTaskNotification } from '@/lib/notifications';
+import { logTaskCreated } from '@/lib/taskActivity';
 
 export async function GET(req: NextRequest) {
   try {
@@ -241,6 +242,11 @@ export async function POST(req: NextRequest) {
         console.error('Failed to create task notification:', err)
       );
     }
+
+    // Log activity
+    logTaskCreated(task.id, authUser.userId).catch((err) =>
+      console.error('Failed to log activity:', err)
+    );
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {

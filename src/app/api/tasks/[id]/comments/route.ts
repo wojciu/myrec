@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { createTaskCommentNotification } from '@/lib/notifications';
+import { logCommentAdded } from '@/lib/taskActivity';
 
 export async function GET(
   req: NextRequest,
@@ -123,6 +124,11 @@ export async function POST(
       task.assigneeId,
       task.assigneeDepartmentId
     ).catch((err) => console.error('Failed to create comment notification:', err));
+
+    // Log comment activity
+    logCommentAdded(taskId, authUser.userId, content.trim()).catch((err) =>
+      console.error('Failed to log activity:', err)
+    );
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {

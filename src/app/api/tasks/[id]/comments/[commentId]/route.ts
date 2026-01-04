@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { logCommentEdited, logCommentDeleted } from '@/lib/taskActivity';
 
 export async function PATCH(
   req: NextRequest,
@@ -56,6 +57,11 @@ export async function PATCH(
       },
     });
 
+    // Log comment edit
+    logCommentEdited(taskId, authUser.userId, content.trim()).catch((err) =>
+      console.error('Failed to log activity:', err)
+    );
+
     return NextResponse.json({ comment: updated });
   } catch (error) {
     console.error('Comment PATCH error:', error);
@@ -101,6 +107,11 @@ export async function DELETE(
     await prisma.taskComment.delete({
       where: { id: commentId },
     });
+
+    // Log comment deletion
+    logCommentDeleted(taskId, authUser.userId).catch((err) =>
+      console.error('Failed to log activity:', err)
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

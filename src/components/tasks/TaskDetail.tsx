@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
-import { TaskComments } from './TaskComments';
+import { TaskActivityLog } from './TaskActivityLog';
 
 interface TaskDetailProps {
   taskId: string;
@@ -262,8 +262,8 @@ export function TaskDetail({ taskId, onClose, onEdit }: TaskDetailProps) {
           )}
           </div>
 
-          {/* Comments */}
-          <TaskComments taskId={taskId} />
+          {/* Activity Log with Comments */}
+          <TaskActivityLog taskId={taskId} />
         </div>
 
         {/* Footer - Actions */}
