@@ -37,11 +37,11 @@ function EntriesContent() {
     }
   }, [searchParams]);
 
-  // Handle ?id= query param to open specific entry (now opens detail, not edit)
+  // Handle ?id= or ?entry= query param to open specific entry (now opens detail, not edit)
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated) return;
 
-    const entryId = searchParams.get('id');
+    const entryId = searchParams.get('id') || searchParams.get('entry');
     if (entryId) {
       setViewingEntryId(entryId);
       setShowDetail(true);

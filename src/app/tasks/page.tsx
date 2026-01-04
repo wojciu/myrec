@@ -37,11 +37,11 @@ function TasksContent() {
     }
   }, [searchParams]);
 
-  // Handle ?id= query param to open specific task
+  // Handle ?id= or ?task= query param to open specific task
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated) return;
 
-    const taskId = searchParams.get('id');
+    const taskId = searchParams.get('id') || searchParams.get('task');
     if (taskId) {
       const loadTask = async () => {
         try {
