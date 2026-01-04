@@ -52,3 +52,34 @@ export async function createEntryNotification(entryId: string, visibleToDepartme
     }
   }
 }
+
+export async function createReminderNotification(taskId: string, assigneeId: string | null, assigneeDepartmentId: string | null) {
+  // Find users who should be notified
+  const usersToNotify: string[] = [];
+
+  if (assigneeId) {
+    usersToNotify.push(assigneeId);
+  }
+
+  if (assigneeDepartmentId) {
+    // Find all users in this department
+    const departmentUsers = await prisma.user.findMany({
+      where: { departmentId: assigneeDepartmentId },
+      select: { id: true },
+    });
+    usersToNotify.push(...departmentUsers.map((u) => u.id));
+  }
+
+  // Create reminder notifications for each user
+  for (const userId of usersToNotify) {
+    await prisma.notification.create({
+      data: {
+        userId,
+        type: 'task_reminder',
+        title: '⏰ Przypomnienie o zadaniu',
+        message: 'Pamiętaj o zadaniu które wymaga Twojej uwagi',
+        taskId,
+      },
+    });
+  }
+}

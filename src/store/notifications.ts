@@ -3,6 +3,14 @@ import { api } from '@/lib/api-client';
 
 export type NotificationType = 'task_reminder' | 'new_task' | 'new_entry' | 'task_assigned';
 
+interface TaskReference {
+  id: string;
+  title: string;
+  status: string;
+  priority: number;
+  dueAt?: string | null;
+}
+
 export interface Notification {
   id: string;
   type: NotificationType;
@@ -12,6 +20,7 @@ export interface Notification {
   entryId?: string;
   read: boolean;
   createdAt: string;
+  task?: TaskReference;
 }
 
 interface NotificationsState {

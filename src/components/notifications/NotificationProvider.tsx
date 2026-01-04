@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNotificationsStore } from '@/store/notifications';
 import { useAuthStore } from '@/store/auth';
+import { ReminderModal } from './ReminderModal';
 
 const POLL_INTERVAL = 30000; // 30 seconds
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const { fetchNotifications } = useNotificationsStore();
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -24,5 +26,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => clearInterval(interval);
   }, [user, fetchNotifications]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ReminderModal onOpen={() => setModalOpen(true)} />
+    </>
+  );
 }

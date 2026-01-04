@@ -2,6 +2,7 @@ import 'dotenv/config';
 import path from 'path';
 import cron from 'node-cron';
 import { prisma } from '../src/lib/db';
+import { createReminderNotification } from '../src/lib/notifications';
 
 // Set absolute path for DATABASE_URL
 if (process.env.DATABASE_URL?.startsWith('file:')) {
@@ -78,15 +79,20 @@ async function sendReminder(task: any) {
     return;
   }
 
-  // TODO: Implement actual notification (email, push, etc.)
-  // For MVP, we just log to console
+  // Create notification in database
+  await createReminderNotification(
+    task.id,
+    task.assigneeId,
+    task.assigneeDepartmentId
+  );
+
   console.log(`╔═══════════════════════════════════════════════════════════════╗`);
   console.log(`║  📬 REMINDER: Task Due                                     `);
   console.log(`╠═══════════════════════════════════════════════════════════════╣`);
   console.log(`║  Title:       ${task.title.padEnd(50)}║`);
-  console.log(`║  Assignee:    ${assignee.name || assignee.displayName || assignee.email}`.padEnd(60) + `║`);
+  console.log(`║  Assignee:    ${task.assignee?.displayName || task.assigneeDepartment?.name || 'Unknown'}`.padEnd(60) + `║`);
   console.log(`║  Priority:    ${task.priority === 1 ? 'HIGH' : task.priority === 2 ? 'MEDIUM' : 'LOW'}`.padEnd(51) + `║`);
-  console.log(`║  Due:         ${task.dueAt ? new Date(task.dueAt).toLocaleString() : 'No due date'}`.padEnd(51) + `║`);
+  console.log(`║  Due:         ${task.dueAt ? new Date(task.dueAt).toLocaleString('pl-PL') : 'No due date'}`.padEnd(51) + `║`);
   console.log(`╚═══════════════════════════════════════════════════════════════╝`);
 }
 
