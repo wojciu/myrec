@@ -45,6 +45,8 @@ interface TasksState {
     sortOrder?: string;
     limit?: number;
     offset?: number;
+    assigneeId?: string;
+    createdById?: string;
   }) => Promise<void>;
   fetchTask: (id: string) => Promise<Task>;
   createTask: (data: {
@@ -85,6 +87,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
       if (params.limit) queryParams.append('limit', params.limit.toString());
       if (params.offset) queryParams.append('offset', params.offset.toString());
+      if (params.assigneeId) queryParams.append('assigneeId', params.assigneeId);
+      if (params.createdById) queryParams.append('createdById', params.createdById);
 
       const url = queryParams.toString() ? `/api/tasks?${queryParams}` : '/api/tasks';
       const data = await api.get<{ tasks: Task[]; total: number }>(url);

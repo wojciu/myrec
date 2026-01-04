@@ -2,7 +2,14 @@
 
 import { useTasksStore } from '@/store/tasks';
 import { useAuthStore } from '@/store/auth';
+import { api } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
+
+interface User {
+  id: string;
+  displayName: string;
+  email: string;
+}
 
 interface TaskListProps {
   onEdit: (task: any) => void;
@@ -42,6 +49,9 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
   const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('createdAt-desc');
   const [page, setPage] = useState<number>(1);
+  const [filterCreatedBy, setFilterCreatedBy] = useState<string>('');
+  const [filterAssignee, setFilterAssignee] = useState<string>('');
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -52,12 +62,30 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
     }
   }, [initialStatus]);
 
-  // Fetch tasks when sort or page changes
+  // Fetch all users for admin filters
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      api.get<{ users: User[] }>('/api/users')
+        .then(data => {
+          setAllUsers(data.users);
+        })
+        .catch(err => console.error('Failed to fetch users:', err));
+    }
+  }, [user?.role]);
+
+  // Fetch tasks when sort, page, or user filters change
   useEffect(() => {
     const [field, order] = sortBy.split('-');
     const offset = (page - 1) * PAGE_SIZE;
-    fetchTasks({ sortBy: field, sortOrder: order, limit: PAGE_SIZE, offset });
-  }, [sortBy, page, fetchTasks]);
+    fetchTasks({
+      sortBy: field,
+      sortOrder: order,
+      limit: PAGE_SIZE,
+      offset,
+      assigneeId: filterAssignee || undefined,
+      createdById: filterCreatedBy || undefined,
+    });
+  }, [sortBy, page, filterAssignee, filterCreatedBy, fetchTasks]);
 
   const filteredTasks = tasks.filter((task) => {
     // For admin, hide completed tasks unless checkbox is checked
@@ -191,15 +219,51 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
           </select>
 
           {user?.role === 'admin' && (
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showCompleted}
-                onChange={(e) => setShowCompleted(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              Pokaż zakończone
-            </label>
+            <>
+              <label className="text-sm text-gray-600 ml-4">Utworzone przez:</label>
+              <select
+                value={filterCreatedBy}
+                onChange={(e) => {
+                  setFilterCreatedBy(e.target.value);
+                  setPage(1);
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+              >
+                <option value="">Wszyscy</option>
+                {allUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.displayName || u.email}
+                  </option>
+                ))}
+              </select>
+
+              <label className="text-sm text-gray-600">Przypisane do:</label>
+              <select
+                value={filterAssignee}
+                onChange={(e) => {
+                  setFilterAssignee(e.target.value);
+                  setPage(1);
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+              >
+                <option value="">Wszyscy</option>
+                {allUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.displayName || u.email}
+                  </option>
+                ))}
+              </select>
+
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showCompleted}
+                  onChange={(e) => setShowCompleted(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                Pokaż zakończone
+              </label>
+            </>
           )}
         </div>
       </div>

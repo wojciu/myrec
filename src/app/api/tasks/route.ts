@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
     const priority = searchParams.get('priority');
     const assigneeId = searchParams.get('assigneeId');
     const assigneeDepartmentId = searchParams.get('assigneeDepartmentId');
+    const createdById = searchParams.get('createdById');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
@@ -68,6 +69,10 @@ export async function GET(req: NextRequest) {
 
     if (assigneeDepartmentId) {
       where.assigneeDepartmentId = assigneeDepartmentId;
+    }
+
+    if (createdById) {
+      where.createdById = createdById;
     }
 
     // Build orderBy based on sortBy and sortOrder params
