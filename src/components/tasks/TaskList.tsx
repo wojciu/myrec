@@ -22,10 +22,26 @@ const PRIORITY_COLORS: Record<number, string> = {
   3: 'text-green-600 bg-green-50 border-green-200',
 };
 
+const SORT_OPTIONS = [
+  { value: 'createdAt-desc', label: 'Data utworzenia (najnowsze)' },
+  { value: 'createdAt-asc', label: 'Data utworzenia (najstarsze)' },
+  { value: 'priority-asc', label: 'Priorytet (najwyższy)' },
+  { value: 'priority-desc', label: 'Priorytet (najniższy)' },
+  { value: 'dueAt-asc', label: 'Termin (najbliższy)' },
+  { value: 'dueAt-desc', label: 'Termin (najdalszy)' },
+  { value: 'status-asc', label: 'Status (A-Z)' },
+  { value: 'updatedAt-desc', label: 'Data modyfikacji (najnowsze)' },
+] as const;
+
+const PAGE_SIZE = 30;
+
 export function TaskList({ onEdit, initialStatus }: TaskListProps) {
-  const { tasks, loading, error, fetchTasks, deleteTask, updateTask } = useTasksStore();
+  const { tasks, total, loading, error, fetchTasks, deleteTask, updateTask } = useTasksStore();
   const { user } = useAuthStore();
   const [filter, setFilter] = useState<string>(initialStatus || 'all');
+  const [showCompleted, setShowCompleted] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<string>('createdAt-desc');
+  const [page, setPage] = useState<number>(1);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -36,11 +52,20 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
     }
   }, [initialStatus]);
 
+  // Fetch tasks when sort or page changes
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    const [field, order] = sortBy.split('-');
+    const offset = (page - 1) * PAGE_SIZE;
+    fetchTasks({ sortBy: field, sortOrder: order, limit: PAGE_SIZE, offset });
+  }, [sortBy, page, fetchTasks]);
 
   const filteredTasks = tasks.filter((task) => {
+    // For admin, hide completed tasks unless checkbox is checked
+    const isCompleted = task.status === 'done' || task.status === 'cancelled';
+    if (user?.role === 'admin' && isCompleted && !showCompleted) {
+      return false;
+    }
+
     if (filter === 'all') return true;
     if (filter === 'overdue') {
       // Show tasks that are overdue (dueAt is in the past and not done)
@@ -134,9 +159,9 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-semibold text-gray-900">Zadania</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
           <label className="text-sm text-gray-600">Filtry:</label>
           <select
             value={filter}
@@ -151,6 +176,31 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
             ))}
             <option value="overdue">Po terminie</option>
           </select>
+
+          <label className="text-sm text-gray-600">Sortowanie:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {user?.role === 'admin' && (
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showCompleted}
+                onChange={(e) => setShowCompleted(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              Pokaż zakończone
+            </label>
+          )}
         </div>
       </div>
 
@@ -292,6 +342,34 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {total > PAGE_SIZE && (
+        <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+          <div className="text-sm text-gray-600">
+            Pokazano {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, total)} z {total} zadań
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              ← Poprzednia
+            </button>
+            <span className="text-sm text-gray-600">
+              Strona {page} z {Math.ceil(total / PAGE_SIZE)}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(Math.ceil(total / PAGE_SIZE), p + 1))}
+              disabled={page >= Math.ceil(total / PAGE_SIZE)}
+              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              Następna →
+            </button>
+          </div>
         </div>
       )}
     </div>

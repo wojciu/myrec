@@ -12,12 +12,15 @@ interface EntryListProps {
 
 type FilterType = 'all' | 'unread';
 
+const PAGE_SIZE = 30;
+
 export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
-  const { entries, loading, error, fetchEntries, deleteEntry } = useEntriesStore();
+  const { entries, total, loading, error, fetchEntries, deleteEntry } = useEntriesStore();
   const { user } = useAuthStore();
   const [filter, setFilter] = useState<FilterType>(
     (initialFilter as FilterType) || 'all'
   );
+  const [page, setPage] = useState<number>(1);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // Update filter when initialFilter changes
@@ -28,8 +31,9 @@ export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
   }, [initialFilter]);
 
   useEffect(() => {
-    fetchEntries();
-  }, [fetchEntries]);
+    const offset = (page - 1) * PAGE_SIZE;
+    fetchEntries({ limit: PAGE_SIZE, offset });
+  }, [page, fetchEntries]);
 
   const filteredEntries = entries.filter((entry) => {
     if (filter === 'all') return true;
@@ -219,6 +223,34 @@ export function EntryList({ onEdit, onView, initialFilter }: EntryListProps) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {total > PAGE_SIZE && (
+        <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+          <div className="text-sm text-gray-600">
+            Pokazano {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, total)} z {total} wpisów
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              ← Poprzednia
+            </button>
+            <span className="text-sm text-gray-600">
+              Strona {page} z {Math.ceil(total / PAGE_SIZE)}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(Math.ceil(total / PAGE_SIZE), p + 1))}
+              disabled={page >= Math.ceil(total / PAGE_SIZE)}
+              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              Następna →
+            </button>
+          </div>
         </div>
       )}
     </div>

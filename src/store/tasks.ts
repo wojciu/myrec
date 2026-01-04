@@ -37,9 +37,15 @@ interface Task {
 
 interface TasksState {
   tasks: Task[];
+  total: number;
   loading: boolean;
   error: string | null;
-  fetchTasks: () => Promise<void>;
+  fetchTasks: (params?: {
+    sortBy?: string;
+    sortOrder?: string;
+    limit?: number;
+    offset?: number;
+  }) => Promise<void>;
   fetchTask: (id: string) => Promise<Task>;
   createTask: (data: {
     title: string;
@@ -67,14 +73,22 @@ interface TasksState {
 
 export const useTasksStore = create<TasksState>((set, get) => ({
   tasks: [],
+  total: 0,
   loading: false,
   error: null,
 
-  fetchTasks: async () => {
+  fetchTasks: async (params = {}) => {
     set({ loading: true, error: null });
     try {
-      const data = await api.get<{ tasks: Task[] }>('/api/tasks');
-      set({ tasks: data.tasks, loading: false });
+      const queryParams = new URLSearchParams();
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.offset) queryParams.append('offset', params.offset.toString());
+
+      const url = queryParams.toString() ? `/api/tasks?${queryParams}` : '/api/tasks';
+      const data = await api.get<{ tasks: Task[]; total: number }>(url);
+      set({ tasks: data.tasks, total: data.total, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
     }

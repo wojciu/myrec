@@ -6,14 +6,16 @@ export async function GET(req: NextRequest) {
   try {
     const authUser = await requireAuth(req);
 
-    // Get query params for filtering
+    // Get query params for filtering and sorting
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '30');
     const offset = parseInt(searchParams.get('offset') || '0');
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
     const assigneeId = searchParams.get('assigneeId');
     const assigneeDepartmentId = searchParams.get('assigneeDepartmentId');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Build visibility filter based on user role and assignments
     let where: any;
@@ -68,6 +70,13 @@ export async function GET(req: NextRequest) {
       where.assigneeDepartmentId = assigneeDepartmentId;
     }
 
+    // Build orderBy based on sortBy and sortOrder params
+    const validSortFields = ['priority', 'createdAt', 'dueAt', 'status', 'updatedAt'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const sortDirection = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const orderBy = { [sortField]: sortDirection };
+
     const [tasks, total] = await Promise.all([
       prisma.task.findMany({
         where,
@@ -100,11 +109,7 @@ export async function GET(req: NextRequest) {
           },
           attachments: true,
         },
-        orderBy: [
-          { status: 'asc' },
-          { priority: 'asc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy,
         take: limit,
         skip: offset,
       }),

@@ -36,9 +36,13 @@ interface Entry {
 
 interface EntriesState {
   entries: Entry[];
+  total: number;
   loading: boolean;
   error: string | null;
-  fetchEntries: () => Promise<void>;
+  fetchEntries: (params?: {
+    limit?: number;
+    offset?: number;
+  }) => Promise<void>;
   fetchEntry: (id: string) => Promise<Entry>;
   createEntry: (data: {
     title?: string;
@@ -57,14 +61,20 @@ interface EntriesState {
 
 export const useEntriesStore = create<EntriesState>((set, get) => ({
   entries: [],
+  total: 0,
   loading: false,
   error: null,
 
-  fetchEntries: async () => {
+  fetchEntries: async (params = {}) => {
     set({ loading: true, error: null });
     try {
-      const data = await api.get<{ entries: Entry[] }>('/api/entries');
-      set({ entries: data.entries, loading: false });
+      const queryParams = new URLSearchParams();
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.offset) queryParams.append('offset', params.offset.toString());
+
+      const url = queryParams.toString() ? `/api/entries?${queryParams}` : '/api/entries';
+      const data = await api.get<{ entries: Entry[]; total: number }>(url);
+      set({ entries: data.entries, total: data.total, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
     }
