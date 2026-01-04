@@ -29,9 +29,38 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Filter by visible departments - user can see entries visible to their department
-    // OR entries with no department restrictions (public entries)
-    if (authUser.departmentId) {
+    // Filter by visible departments based on user role
+    if (authUser.role === 'admin') {
+      // Admin sees all entries
+      // where remains empty
+    } else if (authUser.role === 'manager' && authUser.departmentId) {
+      // Manager sees all entries from their department:
+      // - Entries created by users from their department
+      // - Entries visible to their department
+      // - Public entries (no department restrictions)
+      where.OR = [
+        {
+          author: {
+            departmentId: authUser.departmentId,
+          },
+        },
+        {
+          visibleToDepartments: {
+            some: {
+              id: authUser.departmentId,
+            },
+          },
+        },
+        {
+          visibleToDepartments: {
+            none: {},
+          },
+        },
+      ];
+    } else if (authUser.departmentId) {
+      // Regular user with department sees:
+      // - Entries visible to their department
+      // - Public entries (no department restrictions)
       where.OR = [
         {
           visibleToDepartments: {

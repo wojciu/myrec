@@ -24,8 +24,33 @@ export async function GET(req: NextRequest) {
     if (authUser.role === 'admin') {
       // Admin sees all tasks
       where = {};
+    } else if (authUser.role === 'manager' && authUser.departmentId) {
+      // Manager sees all tasks from their department:
+      // 1. Tasks created by users from their department
+      // 2. Tasks assigned to users from their department
+      // 3. Tasks assigned to their department
+      where = {
+        OR: [
+          // Created by someone in the department
+          {
+            createdBy: {
+              departmentId: authUser.departmentId,
+            },
+          },
+          // Assigned to someone in the department
+          {
+            assignee: {
+              departmentId: authUser.departmentId,
+            },
+          },
+          // Assigned to the department itself
+          {
+            assigneeDepartmentId: authUser.departmentId,
+          },
+        ],
+      };
     } else {
-      // Non-admin users see tasks based on visibility rules:
+      // Regular users see tasks based on visibility rules:
       // 1. Tasks not assigned to anyone (visible to everyone)
       // 2. Tasks assigned to user's department (no specific assignee)
       // 3. Tasks assigned to the user specifically

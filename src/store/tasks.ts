@@ -15,11 +15,11 @@ interface Task {
   reminderSentAt: string | null;
   createdAt: string;
   updatedAt: string;
-  author?: {
+  createdBy?: {
     id: string;
     displayName: string;
     email: string;
-  };
+  } | null;
   assignee?: {
     id: string;
     displayName: string;

@@ -9,6 +9,7 @@ interface User {
   id: string;
   displayName: string;
   email: string;
+  departmentId?: string | null;
 }
 
 interface TaskListProps {
@@ -62,16 +63,25 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
     }
   }, [initialStatus]);
 
-  // Fetch all users for admin filters
+  // Fetch all users for admin/manager filters
   useEffect(() => {
     if (user?.role === 'admin') {
+      // Admin sees all users
       api.get<{ users: User[] }>('/api/users')
         .then(data => {
           setAllUsers(data.users);
         })
         .catch(err => console.error('Failed to fetch users:', err));
+    } else if (user?.role === 'manager' && user.departmentId) {
+      // Manager sees only users from their department
+      api.get<{ users: User[] }>('/api/users')
+        .then(data => {
+          // Filter to only users from manager's department
+          setAllUsers(data.users.filter(u => u.departmentId === user.departmentId));
+        })
+        .catch(err => console.error('Failed to fetch users:', err));
     }
-  }, [user?.role]);
+  }, [user?.role, user?.departmentId]);
 
   // Fetch tasks when sort, page, or user filters change
   useEffect(() => {
@@ -88,9 +98,9 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
   }, [sortBy, page, filterAssignee, filterCreatedBy, fetchTasks]);
 
   const filteredTasks = tasks.filter((task) => {
-    // For admin, hide completed tasks unless checkbox is checked
+    // For admin and manager, hide completed tasks unless checkbox is checked
     const isCompleted = task.status === 'done' || task.status === 'cancelled';
-    if (user?.role === 'admin' && isCompleted && !showCompleted) {
+    if ((user?.role === 'admin' || user?.role === 'manager') && isCompleted && !showCompleted) {
       return false;
     }
 
@@ -218,7 +228,7 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
             ))}
           </select>
 
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || user?.role === 'manager') && (
             <>
               <label className="text-sm text-gray-600 ml-4">Utworzone przez:</label>
               <select
@@ -292,6 +302,9 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
                         {task.priority === 1 ? '!' : task.priority === 2 ? '!!' : '•'}
                       </span>
                       <h3 className="font-medium text-gray-900 truncate">{task.title}</h3>
+                       {task.createdBy && (
+                        <span className='text-xs font-light text-gray-400'>by {task.createdBy.displayName || task.createdBy.email}</span>
+                      )}
                     </div>
 
                     {/* Status + metadata */}
@@ -305,6 +318,7 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
                           {formatDate(task.dueAt)}
                         </span>
                       )}
+                     
                       {task.assignee && (
                         <span>👤 {task.assignee.displayName || task.assignee.email}</span>
                       )}

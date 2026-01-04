@@ -85,6 +85,14 @@ export async function POST(req: NextRequest) {
     // Validate input
     const validatedData = createUserSchema.parse(body);
 
+    // Manager must have a department assigned
+    if (validatedData.role === 'manager' && !validatedData.departmentId) {
+      return NextResponse.json(
+        { error: 'Manager musi mieć przypisany dział' },
+        { status: 400 }
+      );
+    }
+
     // Check if email already exists
     const existing = await prisma.user.findUnique({
       where: { email: validatedData.email },

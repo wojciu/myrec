@@ -77,6 +77,16 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Manager must have a department assigned
+    const newRole = validatedData.role ?? existing.role;
+    const newDepartmentId = validatedData.departmentId ?? existing.departmentId;
+    if (newRole === 'manager' && !newDepartmentId) {
+      return NextResponse.json(
+        { error: 'Manager musi mieć przypisany dział' },
+        { status: 400 }
+      );
+    }
+
     // If updating email, check if it's already taken
     if (validatedData.email && validatedData.email !== existing.email) {
       const emailTaken = await prisma.user.findUnique({

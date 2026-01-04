@@ -46,6 +46,12 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
       return;
     }
 
+    // Manager must have a department assigned
+    if (role === 'manager' && !departmentId.trim()) {
+      setError('Manager musi mieć przypisany dział');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -155,12 +161,13 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
 
             <div>
               <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
-                Dział
+                Dział {role === 'manager' && '*'}
               </label>
               <select
                 id="department"
                 value={departmentId}
                 onChange={(e) => setDepartmentId(e.target.value)}
+                required={role === 'manager'}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="">Brak działu</option>
@@ -170,6 +177,9 @@ export function UserForm({ user, departments, onClose, onSuccess }: UserFormProp
                   </option>
                 ))}
               </select>
+              {role === 'manager' && (
+                <p className="mt-1 text-xs text-gray-500">Dział jest wymagany dla roli managera</p>
+              )}
             </div>
 
             <div>

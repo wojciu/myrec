@@ -6,7 +6,17 @@ export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth(req);
 
+    // Get query params for filtering
+    const { searchParams } = new URL(req.url);
+    const departmentId = searchParams.get('departmentId');
+
+    const where: any = {};
+    if (departmentId) {
+      where.departmentId = departmentId;
+    }
+
     const users = await prisma.user.findMany({
+      where,
       select: {
         id: true,
         displayName: true,
