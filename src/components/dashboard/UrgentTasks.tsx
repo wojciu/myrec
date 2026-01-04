@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useDashboardStore } from '@/store/dashboard';
 import { useTasksStore } from '@/store/tasks';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth';
 
 const PRIORITY_COLORS: Record<number, string> = {
   1: 'text-red-700 bg-red-100 border-red-300',
@@ -25,9 +26,14 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Anulowane',
 };
 
-export function UrgentTasks() {
+interface UrgentTasksProps {
+  onViewTask?: (taskId: string) => void;
+}
+
+export function UrgentTasks({ onViewTask }: UrgentTasksProps) {
   const { stats, loading, fetchStats } = useDashboardStore();
   const { updateTask } = useTasksStore();
+  const { user } = useAuthStore();
   const router = useRouter();
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -89,7 +95,8 @@ export function UrgentTasks() {
             return (
               <div
                 key={task.id}
-                className={`p-3 transition-colors ${overdue ? 'bg-red-50/80' : 'hover:bg-amber-50/30'}`}
+                onClick={() => onViewTask ? onViewTask(task.id) : router.push(`/tasks?id=${task.id}`)}
+                className={`p-3 transition-colors cursor-pointer ${overdue ? 'bg-red-50/80' : 'hover:bg-amber-50/30'}`}
               >
                 {/* Header with priority, title, and actions */}
                 <div className="flex items-start justify-between gap-3">
@@ -156,13 +163,19 @@ export function UrgentTasks() {
                         {updating === task.id ? '...' : '✓ Zrobione'}
                       </button>
                     )}
-                    <button
-                      onClick={() => router.push(`/tasks?id=${task.id}`)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                      title="Szczegóły"
-                    >
-                      …
-                    </button>
+                    {/* Przycisk edycji tylko dla autora, admina lub managera */}
+                    {(!task.createdBy || task.createdBy.id === user?.id || user?.role === 'admin' || user?.role === 'manager') && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/tasks?edit=${task.id}`);
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                        title="Edytuj"
+                      >
+                        Edytuj
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
+import { TaskComments } from './TaskComments';
 
 interface TaskDetailProps {
   taskId: string;
@@ -193,11 +194,11 @@ export function TaskDetail({ taskId, onClose, onEdit }: TaskDetailProps) {
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${PRIORITY_COLORS[task.priority]}`}>
-                {PRIORITY_LABELS[task.priority]} priorytet
+              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS]}`}>
+                {PRIORITY_LABELS[task.priority as keyof typeof PRIORITY_LABELS]} priorytet
               </span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[task.status]}`}>
-                {STATUSES[task.status]}
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[task.status as keyof typeof STATUS_COLORS]}`}>
+                {STATUSES[task.status as keyof typeof STATUSES]}
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-900">{task.title}</h2>
@@ -211,7 +212,8 @@ export function TaskDetail({ taskId, onClose, onEdit }: TaskDetailProps) {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-6 py-4">
+          <div className="space-y-4">
           {/* Description */}
           {task.description && (
             <div>
@@ -258,6 +260,10 @@ export function TaskDetail({ taskId, onClose, onEdit }: TaskDetailProps) {
               <p className="text-gray-900 font-medium">{task.entry.title}</p>
             </div>
           )}
+          </div>
+
+          {/* Comments */}
+          <TaskComments taskId={taskId} />
         </div>
 
         {/* Footer - Actions */}

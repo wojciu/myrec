@@ -41,17 +41,29 @@ function TasksContent() {
   }, [searchParams]);
 
   // Handle ?id= or ?task= query param to open specific task detail
+  // Handle ?edit= query param to open edit form
   useEffect(() => {
     if (!hasHydrated || !isAuthenticated) return;
 
     const taskId = searchParams.get('id') || searchParams.get('task');
-    if (taskId) {
+    const editId = searchParams.get('edit');
+
+    if (editId) {
+      // Open edit form
+      fetchTask(editId).then((task) => {
+        setEditingTask(task);
+        setShowForm(true);
+        router.replace('/tasks');
+      }).catch(() => {
+        router.replace('/tasks');
+      });
+    } else if (taskId) {
       setViewingTaskId(taskId);
       setShowDetail(true);
       // Clear the URL param
       router.replace('/tasks');
     }
-  }, [hasHydrated, isAuthenticated, searchParams, router]);
+  }, [hasHydrated, isAuthenticated, searchParams, router, fetchTask]);
 
   const handleNewTask = () => {
     setEditingTask(null);
@@ -63,6 +75,11 @@ function TasksContent() {
     setEditingTask(task);
     setShowForm(true);
     setFormKey((prev) => prev + 1);
+  };
+
+  const handleViewTask = (task: any) => {
+    setViewingTaskId(task.id);
+    setShowDetail(true);
   };
 
   const handleFormSuccess = () => {
@@ -109,7 +126,7 @@ function TasksContent() {
           </button>
         </div>
 
-        <TaskList onEdit={handleEditTask} initialStatus={initialStatus} />
+        <TaskList onEdit={handleEditTask} onView={handleViewTask} initialStatus={initialStatus} />
 
         {showForm && (
           <TaskForm

@@ -14,6 +14,7 @@ interface User {
 
 interface TaskListProps {
   onEdit: (task: any) => void;
+  onView: (task: any) => void;
   initialStatus?: string | null;
 }
 
@@ -43,7 +44,7 @@ const SORT_OPTIONS = [
 
 const PAGE_SIZE = 30;
 
-export function TaskList({ onEdit, initialStatus }: TaskListProps) {
+export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
   const { tasks, total, loading, error, fetchTasks, deleteTask, updateTask } = useTasksStore();
   const { user } = useAuthStore();
   const [filter, setFilter] = useState<string>(initialStatus || 'all');
@@ -290,7 +291,8 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
             return (
               <div
                 key={task.id}
-                className={`bg-white border rounded-lg p-3 hover:shadow-md transition-shadow ${
+                onClick={() => onView(task)}
+                className={`bg-white border rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer ${
                   overdue ? 'border-red-300 bg-red-50' : 'border-gray-200'
                 }`}
               >
@@ -400,13 +402,19 @@ export function TaskList({ onEdit, initialStatus }: TaskListProps) {
                         {updating === task.id ? '...' : '↺ Otwórz'}
                       </button>
                     )}
-                    <button
-                      onClick={() => onEdit(task)}
-                      className="px-3 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
-                      title="Edytuj"
-                    >
-                      ✏️
-                    </button>
+                    {/* Przycisk edycji tylko dla autora, admina lub managera */}
+                    {(!task.createdBy || task.createdBy.id === user?.id || user?.role === 'admin' || user?.role === 'manager') && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(task);
+                        }}
+                        className="px-3 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                        title="Edytuj"
+                      >
+                        Edytuj
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(task.id)}
                       disabled={deleting === task.id || updating === task.id}

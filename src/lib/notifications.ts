@@ -128,3 +128,62 @@ export async function createTaskStatusNotification(
     },
   });
 }
+
+export async function createTaskCommentNotification(
+  taskId: string,
+  commentAuthorId: string,
+  taskAuthorId: string | null,
+  taskAssigneeId: string | null,
+  taskAssigneeDepartmentId: string | null
+) {
+  // Fetch task to get title and comment author
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { title: true },
+  });
+
+  const commentAuthor = await prisma.user.findUnique({
+    where: { id: commentAuthorId },
+    select: { displayName: true },
+  });
+
+  if (!task || !commentAuthor) return;
+
+  const commentAuthorName = commentAuthor.displayName;
+
+  // Determine who should be notified:
+  // 1. Assignee (if exists and not the comment author)
+  // 2. Department users (if no assignee and not the comment author)
+  // 3. Task author (if no assignee and no department, and not the comment author)
+
+  const usersToNotify: string[] = [];
+
+  if (taskAssigneeId && taskAssigneeId !== commentAuthorId) {
+    usersToNotify.push(taskAssigneeId);
+  } else if (taskAssigneeDepartmentId) {
+    // Find all users in this department except the comment author
+    const departmentUsers = await prisma.user.findMany({
+      where: {
+        departmentId: taskAssigneeDepartmentId,
+        id: { not: commentAuthorId },
+      },
+      select: { id: true },
+    });
+    usersToNotify.push(...departmentUsers.map((u) => u.id));
+  } else if (taskAuthorId && taskAuthorId !== commentAuthorId) {
+    usersToNotify.push(taskAuthorId);
+  }
+
+  // Create notifications
+  for (const userId of usersToNotify) {
+    await prisma.notification.create({
+      data: {
+        userId,
+        type: 'task_comment_added',
+        title: 'Nowy komentarz do zadania',
+        message: `${commentAuthorName} dodał komentarz do zadania "${task.title}"`,
+        taskId,
+      },
+    });
+  }
+}

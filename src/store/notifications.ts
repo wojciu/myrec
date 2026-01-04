@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api-client';
 
-export type NotificationType = 'task_reminder' | 'new_task' | 'new_entry' | 'task_assigned' | 'task_status_changed';
+export type NotificationType = 'task_reminder' | 'new_task' | 'new_entry' | 'task_assigned' | 'task_status_changed' | 'task_comment_added';
 
 interface TaskReference {
   id: string;

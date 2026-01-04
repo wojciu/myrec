@@ -11,6 +11,7 @@ import { UrgentTasks } from '@/components/dashboard/UrgentTasks';
 import { EntryDetail } from '@/components/entries/EntryDetail';
 import { EntryForm } from '@/components/entries/EntryForm';
 import { TaskForm } from '@/components/tasks/TaskForm';
+import { TaskDetail } from '@/components/tasks/TaskDetail';
 import { usePollingRefresh } from '@/hooks/usePollingRefresh';
 import { api } from '@/lib/api-client';
 
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
+  const [viewingTaskId, setViewingTaskId] = useState<string | null>(null);
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const hasFetchedRef = useRef(false);
@@ -64,8 +66,16 @@ export default function DashboardPage() {
     setViewingEntryId(entryId);
   };
 
+  const handleViewTask = (taskId: string) => {
+    setViewingTaskId(taskId);
+  };
+
   const handleDetailClose = () => {
     setViewingEntryId(null);
+  };
+
+  const handleTaskDetailClose = () => {
+    setViewingTaskId(null);
   };
 
   const handleEditEntry = async () => {
@@ -200,7 +210,7 @@ export default function DashboardPage() {
             </button>
 
             {/* Urgent Tasks */}
-            <UrgentTasks />
+            <UrgentTasks onViewTask={handleViewTask} />
           </div>
         </div>
       </main>
@@ -228,6 +238,19 @@ export default function DashboardPage() {
           task={null}
           onClose={() => setShowTaskForm(false)}
           onSuccess={handleTaskFormSuccess}
+        />
+      )}
+
+      {/* Task Detail Modal */}
+      {viewingTaskId && (
+        <TaskDetail
+          taskId={viewingTaskId}
+          onClose={handleTaskDetailClose}
+          onEdit={() => {
+            // Navigate to tasks page with edit param
+            router.push(`/tasks?edit=${viewingTaskId}`);
+            setViewingTaskId(null);
+          }}
         />
       )}
     </div>

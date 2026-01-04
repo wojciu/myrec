@@ -24,6 +24,7 @@ model User {
   assignedTasks  Task[]         @relation("AssigneeTasks")
   createdTasks   Task[]         @relation("CreatorTasks")
   notifications  Notification[]  @relation("UserNotifications")
+  comments       TaskComment[]  @relation("CommentAuthor")
   createdAt      DateTime       @default(now())
 }
 
@@ -93,6 +94,21 @@ model Task {
   updatedAt            DateTime       @updatedAt
   attachments          Attachment[]
   notifications        Notification[]
+  comments             TaskComment[]
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("CommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([createdAt])
 }
 
 model Attachment {

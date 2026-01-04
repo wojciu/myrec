@@ -11,6 +11,7 @@ const TYPE_ICONS: Record<string, string> = {
   new_entry: '📝',
   task_assigned: '👤',
   task_status_changed: '🔄',
+  task_comment_added: '💬',
 };
 
 export function NotificationsDropdown() {
