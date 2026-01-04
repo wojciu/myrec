@@ -126,7 +126,7 @@ function TasksContent() {
           </button>
         </div>
 
-        <TaskList onEdit={handleEditTask} onView={handleViewTask} initialStatus={initialStatus} />
+        <TaskList key={initialStatus || 'default'} onEdit={handleEditTask} onView={handleViewTask} initialStatus={initialStatus} />
 
         {showForm && (
           <TaskForm

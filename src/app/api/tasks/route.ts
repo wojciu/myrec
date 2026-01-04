@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
     const createdById = searchParams.get('createdById');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const excludeCompleted = searchParams.get('excludeCompleted') === 'true';
 
     // Build visibility filter using shared helper (single source of truth)
     const additionalFilters: any = {};
@@ -29,6 +30,11 @@ export async function GET(req: NextRequest) {
     if (assigneeId) additionalFilters.assigneeId = assigneeId;
     if (assigneeDepartmentId) additionalFilters.assigneeDepartmentId = assigneeDepartmentId;
     if (createdById) additionalFilters.createdById = createdById;
+
+    // For admin/manager: exclude done/cancelled tasks when excludeCompleted=true
+    if (excludeCompleted && (authUser.role === 'admin' || authUser.role === 'manager')) {
+      additionalFilters.status = { notIn: ['done', 'cancelled'] };
+    }
 
     const where = buildTaskVisibilityFilter({
       id: authUser.userId,

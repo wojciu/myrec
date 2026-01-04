@@ -42,22 +42,21 @@ const SORT_OPTIONS = [
   { value: 'updatedAt-desc', label: 'Data modyfikacji (najnowsze)' },
 ] as const;
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 10000; // Fetch all tasks at once
 
 export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
-  const { tasks, total, loading, error, fetchTasks, deleteTask, updateTask } = useTasksStore();
+  const { tasks, loading, error, fetchTasks, deleteTask, updateTask } = useTasksStore();
   const { user } = useAuthStore();
   const [filter, setFilter] = useState<string>(initialStatus || 'all');
   const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('createdAt-desc');
-  const [page, setPage] = useState<number>(1);
   const [filterCreatedBy, setFilterCreatedBy] = useState<string>('');
   const [filterAssignee, setFilterAssignee] = useState<string>('');
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
 
-  // Update filter when initialStatus changes
+  // Update filter when initialStatus changes (from navigation)
   useEffect(() => {
     if (initialStatus) {
       setFilter(initialStatus);
@@ -67,37 +66,32 @@ export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
   // Fetch all users for admin/manager filters
   useEffect(() => {
     if (user?.role === 'admin') {
-      // Admin sees all users
       api.get<{ users: User[] }>('/api/users')
-        .then(data => {
-          setAllUsers(data.users);
-        })
+        .then(data => setAllUsers(data.users))
         .catch(err => console.error('Failed to fetch users:', err));
     } else if (user?.role === 'manager' && user.departmentId) {
-      // Manager sees only users from their department
       api.get<{ users: User[] }>('/api/users')
         .then(data => {
-          // Filter to only users from manager's department
           setAllUsers(data.users.filter(u => u.departmentId === user.departmentId));
         })
         .catch(err => console.error('Failed to fetch users:', err));
     }
   }, [user?.role, user?.departmentId]);
 
-  // Fetch tasks when sort, page, or user filters change
+  // Fetch all tasks once (no pagination)
   useEffect(() => {
     const [field, order] = sortBy.split('-');
-    const offset = (page - 1) * PAGE_SIZE;
     fetchTasks({
       sortBy: field,
       sortOrder: order,
       limit: PAGE_SIZE,
-      offset,
+      offset: 0,
       assigneeId: filterAssignee || undefined,
       createdById: filterCreatedBy || undefined,
     });
-  }, [sortBy, page, filterAssignee, filterCreatedBy, fetchTasks]);
+  }, [sortBy, filterAssignee, filterCreatedBy, fetchTasks]);
 
+  // Client-side filtering and sorting
   const filteredTasks = tasks.filter((task) => {
     // For admin and manager, hide completed tasks unless checkbox is checked
     const isCompleted = task.status === 'done' || task.status === 'cancelled';
@@ -107,13 +101,34 @@ export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
 
     if (filter === 'all') return true;
     if (filter === 'overdue') {
-      // Show tasks that are overdue (dueAt is in the past and not done)
       if (task.status === 'done' || task.status === 'cancelled') return false;
       if (!task.dueAt) return false;
       return new Date(task.dueAt) < new Date();
     }
     return task.status === filter;
+  }).sort((a, b) => {
+    const [field, order] = sortBy.split('-');
+    const multiplier = order === 'asc' ? 1 : -1;
+
+    switch (field) {
+      case 'priority':
+        return (a.priority - b.priority) * multiplier;
+      case 'createdAt':
+        return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * multiplier;
+      case 'dueAt':
+        if (!a.dueAt) return 1;
+        if (!b.dueAt) return -1;
+        return (new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime()) * multiplier;
+      case 'status':
+        return a.status.localeCompare(b.status) * multiplier;
+      case 'updatedAt':
+        return (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()) * multiplier;
+      default:
+        return 0;
+    }
   });
+
+
 
   const handleDelete = async (id: string) => {
     if (!confirm('Czy na pewno chcesz usunąć to zadanie?')) return;
@@ -234,10 +249,7 @@ export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
               <label className="text-sm text-gray-600 ml-4">Utworzone przez:</label>
               <select
                 value={filterCreatedBy}
-                onChange={(e) => {
-                  setFilterCreatedBy(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setFilterCreatedBy(e.target.value)}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
               >
                 <option value="">Wszyscy</option>
@@ -251,10 +263,7 @@ export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
               <label className="text-sm text-gray-600">Przypisane do:</label>
               <select
                 value={filterAssignee}
-                onChange={(e) => {
-                  setFilterAssignee(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setFilterAssignee(e.target.value)}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
               >
                 <option value="">Wszyscy</option>
@@ -285,7 +294,8 @@ export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredTasks.map((task) => {
+          <p className="text-sm text-gray-500">Łącznie: {filteredTasks.length} zadań</p>
+          {filteredTasks.map((task, index) => {
             const overdue = isOverdue(task.dueAt);
 
             return (
@@ -297,6 +307,10 @@ export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
+                  {/* TEMP: Position number */}
+                  <div className="text-xs font-mono text-gray-400 w-6 flex-shrink-0 pt-1">
+                    {index + 1}.
+                  </div>
                   <div className="flex-1 min-w-0">
                     {/* Priorytet + tytuł */}
                     <div className="flex items-center gap-2 mb-1">
@@ -428,34 +442,6 @@ export function TaskList({ onEdit, onView, initialStatus }: TaskListProps) {
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {total > PAGE_SIZE && (
-        <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-          <div className="text-sm text-gray-600">
-            Pokazano {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, total)} z {total} zadań
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              ← Poprzednia
-            </button>
-            <span className="text-sm text-gray-600">
-              Strona {page} z {Math.ceil(total / PAGE_SIZE)}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(Math.ceil(total / PAGE_SIZE), p + 1))}
-              disabled={page >= Math.ceil(total / PAGE_SIZE)}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              Następna →
-            </button>
-          </div>
         </div>
       )}
     </div>
