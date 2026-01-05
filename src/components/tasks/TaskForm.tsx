@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTasksStore } from '@/store/tasks';
 import { useUsersStore } from '@/store/users';
 import { useAuthStore } from '@/store/auth';
+import { toast } from 'sonner';
 
 interface TaskFormProps {
   task: any;
@@ -15,7 +16,7 @@ const STATUSES = ['open', 'in_progress', 'done', 'cancelled'] as const;
 const PRIORITIES = [1, 2, 3];
 
 export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
-  const { createTask, updateTask } = useTasksStore();
+  const { createTask, updateTask, uploadAttachment } = useTasksStore();
   const { users, departments, fetchUsers, fetchDepartments } = useUsersStore();
   const { hasHydrated } = useAuthStore();
   const [title, setTitle] = useState('');
@@ -26,8 +27,12 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
   const [assigneeDepartmentId, setAssigneeDepartmentId] = useState<string>('');
   const [dueAt, setDueAt] = useState('');
   const [reminderAt, setReminderAt] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!task;
 
@@ -97,6 +102,28 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
         await createTask(data);
       }
 
+      // Upload files if task was created successfully
+      if (!isEditing && selectedFiles.length > 0) {
+        setUploadingFiles(true);
+        try {
+          // Get the newly created task from the store
+          const { tasks } = useTasksStore.getState();
+          const newTask = tasks[0]; // Most recently created task
+
+          if (newTask) {
+            for (const file of selectedFiles) {
+              await uploadAttachment(newTask.id, file);
+            }
+            toast.success(`${selectedFiles.length} ${selectedFiles.length === 1 ? 'plik' : 'pliki'} został${selectedFiles.length === 1 ? '' : 'y'} przesłane`);
+          }
+        } catch (err) {
+          console.error('Failed to upload attachments:', err);
+          toast.error('Nie udało się przesłać niektórych plików');
+        } finally {
+          setUploadingFiles(false);
+        }
+      }
+
       onSuccess();
       handleClose();
     } catch (err) {
@@ -115,8 +142,24 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
     setAssigneeDepartmentId('');
     setDueAt('');
     setReminderAt('');
+    setSelectedFiles([]);
     setError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     onClose();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -165,6 +208,41 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
                 placeholder="Szczegóły zadania..."
               />
             </div>
+
+            {/* File Upload - only for new tasks */}
+            {!isEditing && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Załączniki (opcjonalnie)
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
+                  multiple
+                />
+                {selectedFiles.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
+                      >
+                        <span className="text-gray-700 truncate">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(index)}
+                          className="text-red-600 hover:text-red-700 ml-2"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -287,17 +365,17 @@ export function TaskForm({ task, onClose, onSuccess }: TaskFormProps) {
               <button
                 type="button"
                 onClick={handleClose}
-                disabled={loading}
+                disabled={loading || uploadingFiles}
                 className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:text-gray-400"
               >
                 Anuluj
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || uploadingFiles}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
               >
-                {loading ? 'Zapisywanie...' : isEditing ? 'Zapisz zmiany' : 'Dodaj zadanie'}
+                {uploadingFiles ? 'Przesyłanie plików...' : loading ? 'Zapisywanie...' : isEditing ? 'Zapisz zmiany' : 'Dodaj zadanie'}
               </button>
             </div>
           </form>

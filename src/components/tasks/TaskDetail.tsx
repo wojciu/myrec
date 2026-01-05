@@ -5,6 +5,8 @@ import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'sonner';
 import { TaskActivityLog } from './TaskActivityLog';
+import { AttachmentList } from './AttachmentList';
+import { AttachmentUpload } from './AttachmentUpload';
 
 interface TaskDetailProps {
   taskId: string;
@@ -59,6 +61,15 @@ export function TaskDetail({ taskId, onClose, onEdit }: TaskDetailProps) {
 
     fetchTask();
   }, [taskId]);
+
+  const refreshTask = async () => {
+    try {
+      const data = await api.get<any>(`/api/tasks/${taskId}`);
+      setTask(data);
+    } catch (error) {
+      console.error('Failed to refresh task:', error);
+    }
+  };
 
   const handleStatusChange = async (newStatus: string) => {
     setUpdating(true);
@@ -221,6 +232,20 @@ export function TaskDetail({ taskId, onClose, onEdit }: TaskDetailProps) {
               <p className="text-gray-700 whitespace-pre-wrap">{task.description}</p>
             </div>
           )}
+
+          {/* Attachments */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 mb-2">Załączniki</h4>
+            {task.attachments && task.attachments.length > 0 ? (
+              <AttachmentList
+                attachments={task.attachments}
+                onDeleted={refreshTask}
+              />
+            ) : (
+              <p className="text-sm text-gray-500">Brak załączników</p>
+            )}
+            <AttachmentUpload taskId={taskId} onUploaded={refreshTask} />
+          </div>
 
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-4">

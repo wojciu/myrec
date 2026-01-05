@@ -1,0 +1,1 @@
+Test file content curl -X POST http://localhost:3000/api/attachments  -H Authorization: Bearer   -F file=@/tmp/test-upload.txt  -F taskId=test-task-id

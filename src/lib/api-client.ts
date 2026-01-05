@@ -53,8 +53,10 @@ export async function apiRequest<T = any>(
 
   let token = useAuthStore.getState().accessToken;
 
+  // Don't set Content-Type if body is FormData - let browser set it with boundary
+  const isFormData = fetchOptions.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(fetchOptions.headers as Record<string, string> || {}),
   };
 

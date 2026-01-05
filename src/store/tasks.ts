@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api-client';
 
+export interface Attachment {
+  id: string;
+  filePath: string;
+  fileName: string;
+  contentType: string;
+  createdAt: string;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -15,6 +23,7 @@ interface Task {
   reminderSentAt: string | null;
   createdAt: string;
   updatedAt: string;
+  attachments?: Attachment[];
   createdBy?: {
     id: string;
     displayName: string;
@@ -71,6 +80,8 @@ interface TasksState {
     reminderAt?: string;
   }) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
+  uploadAttachment: (taskId: string, file: File) => Promise<Attachment>;
+  deleteAttachment: (attachmentId: string) => Promise<void>;
 }
 
 export const useTasksStore = create<TasksState>((set, get) => ({
@@ -139,5 +150,17 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       set({ error: (error as Error).message, loading: false });
       throw error;
     }
+  },
+
+  uploadAttachment: async (taskId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('taskId', taskId);
+
+    return api.postForm<Attachment>('/api/attachments', formData);
+  },
+
+  deleteAttachment: async (attachmentId) => {
+    await api.delete(`/api/attachments/${attachmentId}`);
   },
 }));
