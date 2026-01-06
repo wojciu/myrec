@@ -9,36 +9,30 @@ NC='\033[0m' # No Color
 echo -e "${GREEN}🐳 MyRec Docker Build & Deploy${NC}"
 echo "=================================="
 
-# Sprawdź czy .env.docker istnieje
+# Sprawdź czy .env.docker istnieje, jeśli nie - utwórz z wygenerowanymi sekretami
 if [ ! -f .env.docker ]; then
-    echo -e "${RED}Błąd: .env.docker nie istnieje!${NC}"
-    echo "Utwórz go z .env.docker.example:"
-    echo "  cp .env.docker .env.docker"
-    echo "Następnie edytuj i ustaw JWT_SECRET"
-    exit 1
-fi
+    echo -e "${YELLOW}Tworzę .env.docker z wygenerowanymi sekretami...${NC}"
 
-# Załaduj zmienne środowiskowe
-export $(cat .env.docker | grep -v '^#' | xargs)
+    # Generuj sekrety
+    JWT_SECRET=$(openssl rand -base64 32)
+    JWT_REFRESH_SECRET=$(openssl rand -base64 32)
 
-# Sprawdź JWT_SECRET
-if [ "$JWT_SECRET" = "CHANGE_THIS_GENERATE_WITH_OPENSSL" ]; then
-    echo -e "${YELLOW}⚠️  OSTRZEŻENIE: JWT_SECRET nie jest ustawiony!${NC}"
-    read -p "Czy chcesz wygenerować nowe sekrety teraz? (t/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Tt]$ ]]; then
-        JWT_SECRET=$(openssl rand -base64 32)
-        JWT_REFRESH_SECRET=$(openssl rand -base64 32)
+    # Utwórz .env.docker
+    cat > .env.docker << EOF
+# Database (SQLite w Docker - persisted volume)
+DATABASE_URL=file:./prisma/prod.db
 
-        sed -i.bak "s/JWT_SECRET=.*/JWT_SECRET=$JWT_SECRET/" .env.docker
-        sed -i.bak "s/JWT_REFRESH_SECRET=.*/JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET/" .env.docker
-        rm .env.docker.bak
+# JWT Secrets - auto-generated
+JWT_SECRET=$JWT_SECRET
+JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET
 
-        echo -e "${GREEN}✅ Sekrety wygenerowane i zapisane w .env.docker${NC}"
-    else
-        echo -e "${RED}Anulowano. Ustaw sekrety ręcznie w .env.docker${NC}"
-        exit 1
-    fi
+# Application URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+EOF
+
+    echo -e "${GREEN}✅ Utworzono .env.docker${NC}"
+    echo -e "${YELLOW}⚠️  JWT_SECRET zostały wygenerowane. Zapisz je bezpiecznie!${NC}"
+    echo ""
 fi
 
 # Funkcja do wyboru akcji
@@ -70,6 +64,9 @@ start_containers() {
     echo -e "${GREEN}✅ Kontenery uruchomione${NC}"
     echo ""
     echo "Aplikacja dostępna pod: http://localhost:3000"
+    echo ""
+    echo "Sprawdź status:"
+    docker-compose ps
 }
 
 # Zatrzymywanie
@@ -81,8 +78,28 @@ stop_containers() {
 
 # Logi
 show_logs() {
-    echo -e "${YELLOW}📝 Pokazywanie logów (Ctrl+C aby wyjść)...${NC}"
-    docker-compose logs -f
+    echo ""
+    echo "Którego kontenera logi pokazać?"
+    echo "  1) app"
+    echo "  2) cron"
+    echo "  3) oba"
+    echo -n "Wybierz (1-3): "
+    read log_choice
+
+    case $log_choice in
+        1)
+            docker-compose logs -f app
+            ;;
+        2)
+            docker-compose logs -f cron
+            ;;
+        3)
+            docker-compose logs -f
+            ;;
+        *)
+            echo -e "${RED}Nieprawidłowy wybór${NC}"
+            ;;
+    esac
 }
 
 # Restart
@@ -108,11 +125,11 @@ backup_database() {
 
     echo -e "${YELLOW}💾 Backup bazy danych...${NC}"
 
-    # Kopiuj bazę z kontenera
-    docker-compose exec -T app cp prisma/prod.db - > /dev/null 2>&1 || {
-        echo -e "${RED}Błąd: Kontener nie działa lub baza nie istnieje${NC}"
+    # Sprawdź czy kontener działa
+    if ! docker-compose ps | grep -q "myrec-app.*Up"; then
+        echo -e "${RED}Błąd: Kontener app nie działa${NC}"
         return 1
-    }
+    fi
 
     docker cp myrec-app:/app/prisma/prod.db "$BACKUP_FILE"
     echo -e "${GREEN}✅ Backup zapisany: $BACKUP_FILE${NC}"
