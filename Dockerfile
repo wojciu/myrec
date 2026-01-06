@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Kopiuj package files
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install --prefer-offline --no-audit --no-fund
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
