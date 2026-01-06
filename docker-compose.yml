@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Główna aplikacja Next.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: myrec-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./prisma/prod.db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    volumes:
+      # Persist database
+      - prisma-data:/app/prisma
+      # Persist uploaded files
+      - uploads-data:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Cron job dla przypomnień
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.cron
+    container_name: myrec-cron
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./prisma/prod.db
+    volumes:
+      - prisma-data:/app/prisma
+    depends_on:
+      - app
+
+volumes:
+  prisma-data:
+  uploads-data:

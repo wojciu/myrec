@@ -1,0 +1,21 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Copy scripts and Prisma
+COPY scripts ./scripts
+COPY prisma ./prisma
+
+# Install tsx for running TypeScript
+RUN npm install -g tsx
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+ENV NODE_ENV=production
+
+CMD ["npx", "tsx", "scripts/cron.ts"]

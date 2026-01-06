@@ -1,0 +1,65 @@
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Kopiuj package files
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Stage 2: Builder
+FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Kopiuj dependencies z deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generuj Prisma Client
+RUN npx prisma generate
+
+# Build Next.js
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# Stage 3: Runner (mały obraz produkcyjny)
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Dodaj niezbędne zależności systemowe
+RUN apk add --no-cache libc6-compat openssl
+
+# Użyj nieuprzywilejowanego użytkownika dla bezpieczeństwa
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Kopiuj必要 pliki
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+
+# Kopiuj Next.js standalone output
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Kopiuj Prisma i pliki potrzebne do działania
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Utwórz katalogi dla danych
+RUN mkdir -p /app/prisma /app/uploads
+RUN chown -R nextjs:nodejs /app/prisma /app/uploads
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Start aplikacji
+CMD ["node", "server.js"]
