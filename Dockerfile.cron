@@ -10,6 +10,9 @@ RUN npm install --prefer-offline --no-audit --no-fund
 COPY scripts ./scripts
 COPY prisma ./prisma
 
+# Ustaw tymczasową DATABASE_URL dla buildu
+ENV DATABASE_URL="file:./dev.db"
+
 # Install tsx for running TypeScript
 RUN npx tsx --version
 

@@ -16,6 +16,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Ustaw tymczasową DATABASE_URL dla buildu (może być SQLite w pamięci)
+ENV DATABASE_URL="file:./dev.db"
+
 # Generuj Prisma Client
 RUN npx prisma generate
 
