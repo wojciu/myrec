@@ -1,0 +1,15 @@
+# Tylko to co NIE jest potrzebne w Docker
+node_modules
+.next
+out
+.git
+.env.local
+.env.development
+npm-debug.log
+yarn-error.log
+*.log
+logs
+.DS_Store
+.pm2
+
+# NIE wykluczamy src/, prisma/, scripts/ - są potrzebne!

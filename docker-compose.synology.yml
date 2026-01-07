@@ -1,6 +1,9 @@
 services:
   # Główna aplikacja Next.js
   app:
+    build:
+      context: .
+      dockerfile: Dockerfile.synology
     image: myrec-app:latest
     container_name: myrec-app
     restart: unless-stopped
@@ -24,6 +27,9 @@ services:
 
   # Cron job dla przypomnień
   cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.cron.synology
     image: myrec-cron:latest
     container_name: myrec-cron
     restart: unless-stopped
@@ -36,5 +42,3 @@ services:
     depends_on:
       app:
         condition: service_healthy
-
-# Brak sekcji volumes - używamy localne foldery ./prisma-data i ./uploads-data

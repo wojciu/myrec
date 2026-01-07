@@ -72,7 +72,7 @@ echo ""
 
 # Buduj app
 echo "📦 Budowanie myrec-app..."
-docker build -f Dockerfile.synology -t myrec-app:latest .
+sudo docker build -f Dockerfile.synology -t myrec-app:latest .
 
 if [ $? -eq 0 ]; then
     echo "✅ Obraz myrec-app zbudowany"
@@ -84,7 +84,7 @@ echo ""
 
 # Buduj cron
 echo "📦 Budowanie myrec-cron..."
-docker build -f Dockerfile.cron.synology -t myrec-cron:latest .
+sudo docker build -f Dockerfile.cron.synology -t myrec-cron:latest .
 
 if [ $? -eq 0 ]; then
     echo "✅ Obraz myrec-cron zbudowany"
