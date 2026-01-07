@@ -11,10 +11,10 @@ services:
     environment:
       - NODE_ENV=production
     volumes:
-      # Persist database - katalog na Synology
-      - /volume1/docker/myrec/prisma-data:/app/prisma
-      # Persist uploaded files - katalog na Synology
-      - /volume1/docker/myrec/uploads-data:/app/uploads
+      # Persist database - katalog w tym samym folderze gdzie jest projekt
+      - ./prisma-data:/app/prisma
+      # Persist uploaded files
+      - ./uploads-data:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/login"]
       interval: 30s
@@ -32,11 +32,9 @@ services:
     environment:
       - NODE_ENV=production
     volumes:
-      - /volume1/docker/myrec/prisma-data:/app/prisma
+      - ./prisma-data:/app/prisma
     depends_on:
       app:
         condition: service_healthy
 
-volumes:
-  prisma-data:
-  uploads-data:
+# Brak sekcji volumes - używamy localne foldery ./prisma-data i ./uploads-data
