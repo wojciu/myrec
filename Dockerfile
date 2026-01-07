@@ -57,6 +57,11 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 RUN mkdir -p /app/prisma /app/uploads
 RUN chown -R nextjs:nodejs /app/prisma /app/uploads
 
+# Kopiuj entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chown nextjs:nodejs /usr/local/bin/docker-entrypoint.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -65,4 +70,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Start aplikacji
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.js"]
