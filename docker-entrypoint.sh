@@ -6,9 +6,9 @@ echo "🔍 Sprawdzanie bazy danych..."
 # Jeśli baza nie istnieje, utwórz ją
 if [ ! -f /app/prisma/prod.db ]; then
     echo "📊 Baza danych nie istnieje. Tworzę bazę..."
-    # Użyj push zamiast migrate - wymaga mniej zależności
+    # Użyj node_modules/.bin/prisma - to jest wrapper do właściwej binarki
     export DATABASE_URL="file:./prisma/prod.db"
-    npx prisma db push --skip-generate
+    ./node_modules/.bin/prisma db push --accept-data-loss
     echo "✅ Baza danych utworzona"
 else
     echo "✅ Baza danych już istnieje"

@@ -58,6 +58,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 # Dodaj zależności Prisma (minipass, itp.)
 COPY --from=builder /app/node_modules/minipass ./node_modules/minipass
 COPY --from=builder /app/node_modules/yallist ./node_modules/yallist
