@@ -11,9 +11,29 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { user } = useAuthStore();
   const { fetchNotifications } = useNotificationsStore();
   const [modalOpen, setModalOpen] = useState(false);
+  const [dbInitialized, setDbInitialized] = useState(false);
+
+  // Inicjalizacja bazy danych przy pierwszym załadowaniu
+  useEffect(() => {
+    const initDatabase = async () => {
+      try {
+        const response = await fetch('/api/init');
+        const data = await response.json();
+        if (data.initialized) {
+          console.log('✅ Baza danych zainicjowana');
+        }
+        setDbInitialized(true);
+      } catch (error) {
+        console.error('Błąd inicjalizacji bazy:', error);
+        setDbInitialized(true); // Kontynuuj mimo błędu
+      }
+    };
+
+    initDatabase();
+  }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !dbInitialized) return;
 
     // Initial fetch
     fetchNotifications();
@@ -24,7 +44,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }, POLL_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [user, fetchNotifications]);
+  }, [user, fetchNotifications, dbInitialized]);
 
   return (
     <>
