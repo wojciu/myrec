@@ -66,16 +66,20 @@ else
 fi
 echo ""
 
-# Krok 2: Zainstaluj zależności
+# Krok 2: Zainstaluj zależności (wraz z dev dependencies do buildu)
 echo "📦 Krok 2: Instalowanie zależności..."
-npm install --production
+npm ci
 echo "✅ Zależności zainstalowane"
 echo ""
 
-# Krok 3: Generuj Prisma Client
+# Krok 3: Sprawdź Prisma Client
 echo "🔧 Krok 3: Generowanie Prisma Client..."
-npx prisma generate
-echo "✅ Prisma Client wygenerowany"
+if [ -d "node_modules/.prisma" ] && [ -d "node_modules/@prisma/client" ]; then
+    echo "✅ Prisma Client już wygenerowany"
+else
+    echo "Generowanie Prisma Client..."
+    $NODE_BIN/npx prisma generate
+fi
 echo ""
 
 # Krok 4: Zbuduj aplikację
@@ -84,9 +88,15 @@ npm run build
 echo "✅ Aplikacja zbudowana"
 echo ""
 
-# Krok 5: Zainstaluj PM2 jeśli nie istnieje
+# Krok 5: Usuń dev dependencies (opcjonalnie, dla mniejszego node_modules)
+echo "🧹 Krok 5: Usuwanie dev dependencies..."
+npm prune --production
+echo "✅ Dev dependencies usunięte"
+echo ""
+
+# Krok 6: Zainstaluj PM2 jeśli nie istnieje
 if ! command -v pm2 &> /dev/null; then
-    echo "📦 Krok 5: Instalowanie PM2..."
+    echo "📦 Krok 6: Instalowanie PM2..."
     npm install -g pm2
     echo "✅ PM2 zainstalowane"
 else
@@ -94,8 +104,8 @@ else
 fi
 echo ""
 
-# Krok 6: Skonfiguruj PM2
-echo "🚀 Krok 6: Konfiguracja PM2..."
+# Krok 7: Skonfiguruj PM2
+echo "🚀 Krok 7: Konfiguracja PM2..."
 
 # Zatrzymaj stare procesy jeśli istnieją
 pm2 delete myrec-app 2>/dev/null || true
