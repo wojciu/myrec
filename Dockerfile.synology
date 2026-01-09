@@ -22,8 +22,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Debug - sprawdź co zostało skopiowane
-RUN ls -la /app/src/store/ || echo "BRAK FOLDERU SRC/STORE"
-RUN ls -la /app/src/ || echo "BRAK FOLDERU SRC"
+RUN echo "=== ROOT /app ===" && ls -la /app/ || echo "BRAK APP"
+RUN echo "=== SRC ===" && ls -la /app/src/ || echo "BRAK SRC"
+RUN echo "=== SRC/STORE ===" && ls -la /app/src/store/ || echo "BRAK SRC/STORE"
+RUN echo "=== SRC/APP ===" && ls -la /app/src/app/ || echo "BRAK SRC/APP"
 
 # Ustaw tymczasową DATABASE_URL dla buildu
 ENV DATABASE_URL="file:./dev.db"
