@@ -21,6 +21,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Debug - sprawdź co zostało skopiowane
+RUN ls -la /app/src/store/ || echo "BRAK FOLDERU SRC/STORE"
+RUN ls -la /app/src/ || echo "BRAK FOLDERU SRC"
+
 # Ustaw tymczasową DATABASE_URL dla buildu
 ENV DATABASE_URL="file:./dev.db"
 
