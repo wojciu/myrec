@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     // Don't send password hashes
-    const safeUsers = users.map((u) => ({
+    const safeUsers = users.map((u: any) => ({
       ...u,
     }));
 

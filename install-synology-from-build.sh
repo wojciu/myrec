@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # ===================================
-# Skrypt instalacyjny dla Synology BEZ Dockera
+# Skrypt instalacyjny dla Synology Z GOTOWYM BUILDEM
+# Używaj tego skryptu JEŚLI budowałeś na Macu
 # ===================================
 
 set -e
 
-echo "🚀 Instalacja Hotel Shift Journal na Synology (Native)"
-echo "======================================================"
+echo "🚀 Instalacja Hotel Shift Journal na Synology (z gotowym buildem)"
+echo "=================================================================="
 echo ""
 
 # Znajdź Node.js
@@ -46,6 +47,17 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
+# Sprawdź czy build istnieje
+if [ ! -d ".next" ]; then
+    echo "❌ Błąd: Nie znaleziono folderu .next"
+    echo "Musisz najpierw zbudować aplikację na Macu!"
+    echo "Uruchom: ./build-and-package.sh"
+    exit 1
+fi
+
+echo "✅ Znaleziono build (.next)"
+echo ""
+
 # Krok 1: Utwórz .env jeśli nie istnieje
 if [ ! -f .env ]; then
     echo "📝 Krok 1: Tworzenie .env..."
@@ -66,39 +78,15 @@ else
 fi
 echo ""
 
-# Krok 2: Zainstaluj zależności (wraz z dev dependencies do buildu)
-echo "📦 Krok 2: Instalowanie zależności..."
-npm ci
+# Krok 2: Zainstaluj tylko produkcje zależności
+echo "📦 Krok 2: Instalowanie zależności produkcyjnych..."
+npm install --production
 echo "✅ Zależności zainstalowane"
 echo ""
 
-# Krok 3: Generuj Prisma Client
-echo "🔧 Krok 3: Generowanie Prisma Client..."
-echo "Uruchamianie: $NODE_BIN/npx prisma generate"
-$NODE_BIN/npx prisma generate
-if [ $? -eq 0 ]; then
-    echo "✅ Prisma Client wygenerowany"
-else
-    echo "❌ Błąd generowania Prisma Client!"
-    exit 1
-fi
-echo ""
-
-# Krok 4: Zbuduj aplikację
-echo "🏗️  Krok 4: Budowanie aplikacji..."
-npm run build
-echo "✅ Aplikacja zbudowana"
-echo ""
-
-# Krok 5: Usuń dev dependencies (opcjonalnie, dla mniejszego node_modules)
-echo "🧹 Krok 5: Usuwanie dev dependencies..."
-npm prune --production
-echo "✅ Dev dependencies usunięte"
-echo ""
-
-# Krok 6: Zainstaluj PM2 jeśli nie istnieje
+# Krok 3: Zainstaluj PM2 jeśli nie istnieje
 if ! command -v pm2 &> /dev/null; then
-    echo "📦 Krok 6: Instalowanie PM2..."
+    echo "📦 Krok 3: Instalowanie PM2..."
     npm install -g pm2
     echo "✅ PM2 zainstalowane"
 else
@@ -106,8 +94,8 @@ else
 fi
 echo ""
 
-# Krok 7: Skonfiguruj PM2
-echo "🚀 Krok 7: Konfiguracja PM2..."
+# Krok 4: Skonfiguruj PM2
+echo "🚀 Krok 4: Konfiguracja PM2..."
 
 # Zatrzymaj stare procesy jeśli istnieją
 pm2 delete myrec-app 2>/dev/null || true
@@ -127,7 +115,7 @@ echo ""
 
 echo "🎉 Instalacja zakończona pomyślnie!"
 echo ""
-echo "======================================================"
+echo "=================================================================="
 echo "Aplikacja działa na:"
 echo "  http://TWOJE-SYNOLOGY-IP:3000"
 echo ""
@@ -137,4 +125,4 @@ echo "  pm2 logs myrec-app      - Zobacz logi"
 echo "  pm2 restart myrec-app   - Restart aplikacji"
 echo "  pm2 stop myrec-app      - Zatrzymaj"
 echo "  pm2 delete myrec-app    - Usuń"
-echo "======================================================"
+echo "=================================================================="
