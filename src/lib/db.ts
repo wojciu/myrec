@@ -10,7 +10,8 @@ const getDatabaseUrl = () => {
   const dbUrl = process.env.DATABASE_URL;
   if (dbUrl?.startsWith('file:')) {
     const relativePath = dbUrl.replace('file:', '');
-    const absolutePath = path.join(process.cwd(), relativePath);
+    // Use absolute path directly for Docker, process.cwd() for local dev
+    const absolutePath = path.resolve('/', relativePath);
     return `file:${absolutePath}`;
   }
   return dbUrl;

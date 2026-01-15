@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: myrec-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/prisma/prod.db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+    volumes:
+      # Katalog z bazą danych (cały prisma)
+      - ./prisma:/app/prisma
+      # Pliki upload
+      - ./uploads:/app/uploads
+    networks:
+      - myrec-network
+
+networks:
+  myrec-network:
+    driver: bridge
